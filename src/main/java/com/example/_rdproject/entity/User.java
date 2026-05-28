@@ -1,5 +1,6 @@
 package com.example._rdproject.entity;
 
+import com.example._rdproject.domain.AssignedLevel;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -56,5 +57,8 @@ public class User {
     // CEFR 등급 Enum (기획서에 맞춰 초기 가입 시엔 null 허용해야 하므로 컬럼 제약 해제)
     public enum CefrLevel {
         A1, A2, B1, B2, C1, C2
+    }
+    public void updateCurrentLevel(CefrLevel level) {
+        this.currentLevel = level;
     }
 }
