@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "1. 인증 및 유저 관리 API", description = "게스트 로그인 및 유저 프로필 관련 연동 항목입니다.")
+@Tag(name = "Auth & User Manager", description = "게스트 로그인 및 유저 프로필 관련 API")
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor

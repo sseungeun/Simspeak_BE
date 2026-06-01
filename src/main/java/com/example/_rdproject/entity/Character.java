@@ -22,5 +22,17 @@ public class Character {
     private String imageUrl;
 
     @Column(name = "is_initial_unlocked", nullable = false)
-    private boolean isInitialUnlocked; // 기획상 활성화 캐릭터 3명(true), 잠금 캐릭터 2명(false) 구분용
+    private boolean isInitialUnlocked;
+
+    @Column(nullable = false, length = 4)
+    private String mbti;
+
+    @Column(name = "stat_affinity")
+    private int statAffinity;
+
+    @Column(name = "stat_tsundere")
+    private int statTsundere;
+
+    @Column(name = "stat_wit")
+    private int statWit;
 }

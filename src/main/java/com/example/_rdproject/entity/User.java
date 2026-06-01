@@ -41,6 +41,10 @@ public class User {
     @Builder.Default
     private Integer continuousDays = 0;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "last_selected_character_id")
+    private Character lastCharacter;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -60,5 +64,8 @@ public class User {
     }
     public void updateCurrentLevel(CefrLevel level) {
         this.currentLevel = level;
+    }
+    public void updateLastCharacter(Character character) {
+        this.lastCharacter = character;
     }
 }
