@@ -26,7 +26,7 @@ public class CharacterDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class CharacterStatusResponse {
-        private Long characterId;
+        private String characterId;
         private String name;
         private String description;
         private String imageUrl;
@@ -44,7 +44,7 @@ public class CharacterDto {
     @AllArgsConstructor
     @Builder // Service 단에서 편하게 조립할 수 있도록 Builder 추가
     public static class StageListResponse {
-        private Long characterId;
+        private String characterId;
         private String characterName;
         private List<StageResponse> stages;
     }
@@ -73,7 +73,7 @@ public class CharacterDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class MyCharacterResponse {
-        private Long id;
+        private String id;
         private String name;
         private String description;
         private String imageUrl;

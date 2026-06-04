@@ -62,7 +62,7 @@ public class UserService {
     /**
      * 메인 로비/대화 진입 시 최근 사용 캐릭터 ID 업데이트
      */
-    public void updateLastCharacter(Long userId, Long characterId) {
+    public void updateLastCharacter(Long userId, String characterId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. ID: " + userId));
 

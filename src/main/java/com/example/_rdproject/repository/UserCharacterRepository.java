@@ -1,13 +1,18 @@
 package com.example._rdproject.repository;
 
+import com.example._rdproject.entity.User;
 import com.example._rdproject.entity.UserCharacter;
+import org.springframework.data.jpa.repository.EntityGraph;
+import com.example._rdproject.entity.Character;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface UserCharacterRepository extends JpaRepository<UserCharacter, Long> {
-    // 유저의 모든 캐릭터 호감도/해금 상태 정보를 페치 조인으로 땡겨오기 (성능 최적화)
-    @Query("select uc from UserCharacter uc join fetch uc.character where uc.user.id = :userId")
-    List<UserCharacter> findAllByUserIdWithCharacter(@Param("userId") Long userId);
+
+    // 1. 필요한 메서드 하나만 유지 (이름을 맞춰줍니다)
+    @EntityGraph(attributePaths = {"character"})
+    List<UserCharacter> findAllByUserId(Long userId);
+
+    // 2. 캐릭터 보유 여부 확인용 메서드 추가
+    boolean existsByUserAndCharacter(User user, Character character);
 }

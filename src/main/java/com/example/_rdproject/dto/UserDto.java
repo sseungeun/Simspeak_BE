@@ -11,6 +11,6 @@ public class UserDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class UpdateLastCharacterRequest {
-        private Long characterId;
+        private String characterId;
     }
 }

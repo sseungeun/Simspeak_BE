@@ -44,7 +44,7 @@ public class CharacterController {
     @GetMapping("/{character_id}/stages")
     public ResponseEntity<CommonResponse<CharacterDto.StageListResponse>> getCharacterStages(
             @RequestParam(name = "userId") Long userId,
-            @PathVariable(name = "character_id") Long characterId
+            @PathVariable(name = "character_id") String characterId
     ) {
         CharacterDto.StageListResponse data = characterService.getCharacterStages(userId, characterId);
         return ResponseEntity.ok(CommonResponse.success("캐릭터별 스테이지 목록 및 진척도 조회가 완료되었습니다.", data));
@@ -84,6 +84,19 @@ public class CharacterController {
     ) {
         StageProgressDto.UpdateResponse response = stageService.updateStageProgress(request);
         return ResponseEntity.ok(CommonResponse.success("스테이지 진행도 업데이트가 완료되었습니다.", response));
+    }
+
+    @Operation(
+            summary = "캐릭터 획득/해금 처리",
+            description = "유저가 특정 캐릭터를 획득했을 때 보유 테이블에 추가하고 초기 상태를 생성합니다."
+    )
+    @PostMapping("/{character_id}/acquire")
+    public ResponseEntity<CommonResponse<String>> acquireCharacter(
+            @RequestParam(name = "userId") Long userId,
+            @PathVariable(name = "character_id") String characterId
+    ) {
+        characterService.acquireCharacter(userId, characterId);
+        return ResponseEntity.ok(CommonResponse.success("캐릭터를 성공적으로 획득하였습니다.", "SUCCESS"));
     }
 
 }
