@@ -1,20 +1,15 @@
 package com.example._rdproject.service;
 
-import com.example._rdproject.entity.AnswerHistory;
-import com.example._rdproject.entity.LevelTest;
-import com.example._rdproject.entity.Question;
-import com.example._rdproject.entity.User;
 import com.example._rdproject.dto.LevelTestDto;
-import com.example._rdproject.repository.AnswerHistoryRepository;
-import com.example._rdproject.repository.LevelTestRepository;
-import com.example._rdproject.repository.QuestionRepository;
-import com.example._rdproject.repository.UserRepository;
+import com.example._rdproject.entity.*;
+import com.example._rdproject.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -23,47 +18,33 @@ public class LevelTestService {
 
     private final LevelTestRepository levelTestRepository;
     private final QuestionRepository questionRepository;
-    private final AnswerHistoryRepository answerHistoryRepository;
     private final UserRepository userRepository;
+    private final AnswerHistoryRepository answerHistoryRepository; // 1. 명칭 수정
 
-    /**
-     * 레벨 테스트 결과 등록 및 유저 등급 업데이트
-     */
     @Transactional
     public void saveLevelTestResult(LevelTestDto.SaveRequest request) {
-        // 1. 유저 조회 (없으면 예외 처리)
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. ID: " + request.getUserId()));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
-        // 2. 레벨 테스트 이력(english_level_tests) 생성 및 저장
-        LevelTest levelTest = LevelTest.builder()
+        EnglishLevelTest levelTest = EnglishLevelTest.builder()
                 .user(user)
-                .testType(request.getTestType())
-                .assignedLevel(request.getAssignedLevel())
+                .testType(request.getLevelTestType())
+                .assignedLevel(request.getCefrLevelType())
                 .testScore(request.getTestScore())
                 .build();
 
         levelTestRepository.save(levelTest);
 
-        String levelString = request.getAssignedLevel().name(); // 예: "A1"
-        User.CefrLevel cefrLevel = User.CefrLevel.valueOf(levelString);
-
-        // 3. 유저의 현재 레벨
-        user.updateCurrentLevel(cefrLevel);
+        // 2. 메서드 인자 및 호출 수정 (오타 수정: cefrLevel 사용)
+        user.updateCurrentLevel(request.getCefrLevelType());
     }
-    /**
-     * 유저의 현재 레벨 상태 조회
-     */
+
     public LevelTestDto.StatusResponse getUserLevelStatus(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. ID: " + userId));
-
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
         return new LevelTestDto.StatusResponse(user.getId(), user.getCurrentLevel());
     }
-    /**
-     * 유저의 현재 문항 조회
-     */
-    // 1. 문항 조회
+
     public LevelTestDto.QuestionListResponse getAllQuestions() {
         List<Question> questions = questionRepository.findAll();
 
@@ -81,9 +62,8 @@ public class LevelTestService {
                 .build();
     }
 
-    // 2. 답변 제출
     @Transactional
-    public void submitAnswer(Long userId, Long questionId, String answerText, AnswerHistory.AnswerType answerType) {
+    public void submitAnswer(Long userId, Long questionId, String answerText) {
         User user = userRepository.findById(userId).orElseThrow();
         Question question = questionRepository.findById(questionId).orElseThrow();
 
@@ -91,9 +71,9 @@ public class LevelTestService {
                 .user(user)
                 .question(question)
                 .answerText(answerText)
-                .answerType(answerType)
                 .build();
 
+        // 4. 레포지토리 인스턴스 사용 (정적 메서드 호출이 아님)
         answerHistoryRepository.save(history);
     }
 }

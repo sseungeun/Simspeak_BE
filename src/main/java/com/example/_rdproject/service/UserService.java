@@ -1,8 +1,9 @@
 package com.example._rdproject.service;
 
+import com.example._rdproject.domain.GenderType;
 import com.example._rdproject.dto.GuestAuthDto;
-import com.example._rdproject.entity.Character;
 import com.example._rdproject.entity.User;
+import com.example._rdproject.entity.Character;
 import com.example._rdproject.repository.CharacterRepository;
 import com.example._rdproject.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ public class UserService {
     private final CharacterRepository characterRepository;
 
     @Transactional
-    public GuestAuthDto.ResponseData loginOrCreateGuest(GuestAuthDto.Request request) {
+    public GuestAuthDto.GuestLoginResponseData loginOrCreateGuest(GuestAuthDto.GuestLoginRequest request) {
         String guestId = request.getGuest_id();
 
         // 1. 기존 가입된 게스트 유저가 있는지 조회
@@ -28,7 +29,7 @@ public class UserService {
         if (existingUser.isPresent()) {
             // 2. 기존 유저인 경우 (is_new_user = false)
             User user = existingUser.get();
-            return GuestAuthDto.ResponseData.builder()
+            return GuestAuthDto.GuestLoginResponseData.builder()
                     .user_id(user.getId())
                     .nickname(user.getNickname())
                     .current_level(user.getCurrentLevel() != null ? user.getCurrentLevel().name() : null)
@@ -40,7 +41,7 @@ public class UserService {
             User newUser = User.builder()
                     .guestId(guestId)
                     .nickname("TemporaryGuest") // ID 발급 전에 임시 세팅
-                    .preferredPartnerGender(User.Gender.female) // 기본값 설정
+                    .preferredPartnerGender(GenderType.female) // 기본값 설정
                     .continuousDays(0)
                     .build();
 
@@ -50,7 +51,7 @@ public class UserService {
             savedUser.setNickname("Guest_" + savedUser.getId());
             userRepository.save(savedUser); // 변경 감지(Dirty Check) 및 재저장
 
-            return GuestAuthDto.ResponseData.builder()
+            return GuestAuthDto.GuestLoginResponseData.builder()
                     .user_id(savedUser.getId())
                     .nickname(savedUser.getNickname())
                     .current_level(null) // 신규 가입 null 처리

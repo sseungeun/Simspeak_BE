@@ -1,6 +1,6 @@
 package com.example._rdproject.dto;
 
-import com.example._rdproject.entity.User.CefrLevel;
+import com.example._rdproject.domain.CefrLevelType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,7 +16,7 @@ public class CharacterDto {
     public static class MainStatusResponse {
         private Long userId;
         private String nickname;
-        private CefrLevel currentLevel;
+        private CefrLevelType currentLevel;
         private Integer continuousDays;
         private List<CharacterStatusResponse> characters;
     }

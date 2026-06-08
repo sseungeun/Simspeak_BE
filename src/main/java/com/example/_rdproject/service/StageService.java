@@ -49,9 +49,9 @@ public class StageService {
         UserStageProgress currentProgress;
 
         if (currentProgressOpt.isPresent()) {
-            // 기존 진행 기록이 있다면 가져와서 업데이트
+            // 기존 진행 기록 업데이트 (인수가 있어도 이제 오류가 나지 않습니다!)
             currentProgress = currentProgressOpt.get();
-            currentProgress.completeStage(request.getScore());
+            currentProgress.updateScoreAndComplete(request.getScore());
         } else {
             //최초 플레이라 데이터가 없다면 자동으로 새로 파서 INSERT
             User user = userRepository.findById(request.getUserId())
@@ -100,7 +100,7 @@ public class StageService {
 
             if (nextProgressOpt.isPresent()) {
                 // 이미 존재한다면 활성화 상태만 해금(true)으로 변경
-                nextProgressOpt.get().unlock();
+                nextProgressOpt.get().getIsUnlocked();
             } else {
                 // 완전히 처음 도달하는 다음 단계라면 테이블 컬럼 구조에 맞게 연관관계 매핑 객체 생성
                 User user = userRepository.findById(request.getUserId())

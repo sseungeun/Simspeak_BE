@@ -1,15 +1,21 @@
 package com.example._rdproject.entity;
 
+
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDateTime;
 
-@Entity
 @Getter
-@Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Entity
+@Table(name = "answer_history")
 public class AnswerHistory {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -20,23 +26,14 @@ public class AnswerHistory {
     @JoinColumn(name = "question_id")
     private Question question;
 
-    @Column(columnDefinition = "TEXT")
-    private String answerText; // STT 결과 혹은 텍스트 답변
+    @Column(name = "answer_text", columnDefinition = "text")
+    private String answerText;
 
-    @Enumerated(EnumType.STRING)
-    private AnswerType answerType; // VOICE 혹은 TEXT (Enum으로 정의 필요)
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
-    private String aiFeedback; // 추후 AI가 분석한 내용 저장용
-
-    public enum AnswerType {
-        VOICE, TEXT
-    }
-
-    @Builder
-    public AnswerHistory(User user, Question question, String answerText, AnswerType answerType) {
-        this.user = user;
-        this.question = question;
-        this.answerText = answerText;
-        this.answerType = answerType;
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
     }
 }

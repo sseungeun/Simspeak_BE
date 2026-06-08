@@ -7,14 +7,14 @@ public class GuestAuthDto {
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Request {
+    public static class GuestLoginRequest {
         private String guest_id;
     }
 
     @Getter
     @Builder
     @AllArgsConstructor
-    public static class ResponseData {
+    public static class GuestLoginResponseData {
         private Long user_id;
         private String nickname;
         private String current_level;

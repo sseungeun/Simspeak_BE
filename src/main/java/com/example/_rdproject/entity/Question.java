@@ -1,21 +1,32 @@
 package com.example._rdproject.entity;
 
+import com.example._rdproject.domain.ChatInputType;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Entity
+@Table(name = "question")
 public class Question {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
 
-    private String questionText; // 질문 내용
+    @Column(name = "question_text")
+    private String questionText;
 
-    private String difficultyLevel; // 예: "A1", "B2" 등 변별 목표 레벨
+    @Enumerated(EnumType.STRING)
+    @Column(name = "question_type")
+    private ChatInputType questionType; // ChatInputType enum 사용
 
-    private String category; // 예: "자기소개", "의견 말하기" 등
+    @Column(name = "category")
+    private String category;
+
+    @Column(name = "difficulty_level")
+    private String difficultyLevel;
 }

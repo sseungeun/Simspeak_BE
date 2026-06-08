@@ -1,6 +1,6 @@
 package com.example._rdproject.domain;
 
 public enum ChatInputType {
-    VOICE,      // 음성
-    TEXT        // 텍스트
+    voice,      // 음성
+    text       // 텍스트
 }

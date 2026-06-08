@@ -1,38 +1,42 @@
 package com.example._rdproject.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "characters")
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Character {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    @Column(name = "id")
+    private String id; // character_id
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "name")
     private String name;
 
+    @Column(name = "description", columnDefinition = "text")
     private String description;
 
     @Column(name = "image_url")
     private String imageUrl;
 
-    @Column(name = "is_initial_unlocked", nullable = false)
-    private boolean isInitialUnlocked;
-
-    @Column(nullable = false, length = 4)
+    @Column(name = "mbti")
     private String mbti;
 
     @Column(name = "stat_affinity")
-    private int statAffinity;
+    private Integer statAffinity = 0;
 
     @Column(name = "stat_tsundere")
-    private int statTsundere;
+    private Integer statTsundere = 0;
 
     @Column(name = "stat_wit")
-    private int statWit;
+    private Integer statWit = 0;
 }

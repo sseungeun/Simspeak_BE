@@ -53,11 +53,12 @@ public class LevelTestController {
     @Operation(summary = "레벨 테스트 답변 제출", description = "주관식/음성 문항에 대한 답변을 저장합니다.")
     @PostMapping("/answer")
     public ResponseEntity<CommonResponse<Void>> submitAnswer(@RequestBody LevelTestDto.SubmitAnswerRequest request) {
+        // AnswerType 제거에 맞춰 인자 3개만 전달
         levelTestService.submitAnswer(
                 request.getUserId(),
                 request.getQuestionId(),
-                request.getAnswerText(),
-                request.getAnswerType());
+                request.getAnswerText()
+        );
         return ResponseEntity.ok(CommonResponse.success("답변이 저장되었습니다.", null));
     }
 }

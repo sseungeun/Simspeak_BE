@@ -1,70 +1,67 @@
 package com.example._rdproject.entity;
 
-import com.example._rdproject.domain.AssignedLevel;
+import com.example._rdproject.domain.CefrLevelType;
+import com.example._rdproject.domain.GenderType;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
-@Entity
-@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Entity
+@Table(name = "users")
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "login_id", unique = true)
+    @Column(name = "login_id")
     private String loginId;
 
+    @Column(name = "password")
     private String password;
 
-    @Column(name = "guest_id", unique = true)
+    @Column(name = "guest_id")
     private String guestId;
 
-    @Column(nullable = false)
+    @NotNull
+    @Column(name = "nickname", nullable = false)
     private String nickname;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "preferred_partner_gender")
-    private Gender preferredPartnerGender;
+    @NotNull
+    @Column(name = "preferred_partner_gender", nullable = false)
+    private GenderType preferredPartnerGender;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "current_level")
-    private CefrLevel currentLevel;
+    private CefrLevelType currentLevel;
 
+    @NotNull
     @Column(name = "continuous_days", nullable = false)
-    @Builder.Default
     private Integer continuousDays = 0;
 
+    @Column(name = "created_at")
+    private Instant createdAt = Instant.now();
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "last_selected_character_id")
+    @JoinColumn(name = "last_character_id") // DB의 컬럼명과 일치
     private Character lastCharacter;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+    // 상태 업데이트 메서드 추가
+    public void updateCurrentLevel(CefrLevelType newLevel) {
+        this.currentLevel = newLevel;
     }
 
-    // 선호 성별 Enum
-    public enum Gender {
-        male, female
+    public CefrLevelType getCurrentLevel() {
+        return this.currentLevel;
     }
 
-    // CEFR 등급 Enum (기획서에 맞춰 초기 가입 시엔 null 허용해야 하므로 컬럼 제약 해제)
-    public enum CefrLevel {
-        A1, A2, B1, B2, C1, C2
-    }
-    public void updateCurrentLevel(CefrLevel level) {
-        this.currentLevel = level;
-    }
     public void updateLastCharacter(Character character) {
         this.lastCharacter = character;
     }

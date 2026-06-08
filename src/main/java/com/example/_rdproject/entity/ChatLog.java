@@ -4,35 +4,70 @@ import com.example._rdproject.domain.ChatInputType;
 import com.example._rdproject.domain.ChatRoleType;
 import com.example._rdproject.domain.PenaltyReasonType;
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
+@Table(name = "chat_log")
 public class ChatLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
 
-    private String messageId;    // 메시지 고유 식별자
-    private Long userId;         // 누가 보냈는지
-    private String characterId;  // 어떤 캐릭터와 대화 중인지
-    private String sessionId;    // 채팅방 구분자 (질문하신 그 세션 ID)
-    private String scenarioId;   // 현재 진행 중인 시나리오
-    private Integer turnCount;   // 대화 순서
+    @Column(name = "message_id", unique = true)
+    private String messageId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "character_id")
+    private Character character;
+
+    @Column(name = "session_id")
+    private String sessionId;
+
+    @Column(name = "scenario_id")
+    private String scenarioId;
+
+    @Column(name = "turn_count")
+    private Integer turnCount;
 
     @Enumerated(EnumType.STRING)
-    private ChatRoleType role;   // USER 혹은 AI
+    @Column(name = "role")
+    private ChatRoleType role;
 
     @Enumerated(EnumType.STRING)
-    private ChatInputType inputType; // VOICE 혹은 TEXT
+    @Column(name = "input_type")
+    private ChatInputType inputType;
 
-    @Column(columnDefinition = "TEXT")
-    private String textContent;  // 대화 내용
-    private String audioUrl;     // 음성 데이터 링크
+    @Column(name = "text_content", columnDefinition = "text")
+    private String textContent;
+
+    @Column(name = "audio_url")
+    private String audioUrl;
+
+    @Column(name = "grammar_feedback", columnDefinition = "text")
+    private String grammarFeedback;
+
+    @Column(name = "is_penalty")
+    private Boolean isPenalty;
+
+    @Column(name = "affinity_delta")
+    private Integer affinityDelta;
 
     @Enumerated(EnumType.STRING)
-    private PenaltyReasonType penaltyReason; // 페널티 발생 시 이유
+    @Column(name = "penalty_reason")
+    private PenaltyReasonType penaltyReason;
 
-    private Integer affinityDelta; // 호감도 변화량
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 }

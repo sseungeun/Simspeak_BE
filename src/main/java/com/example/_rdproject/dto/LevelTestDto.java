@@ -1,8 +1,8 @@
 package com.example._rdproject.dto;
 
-import com.example._rdproject.domain.AssignedLevel;
-import com.example._rdproject.domain.TestType;
-import com.example._rdproject.entity.AnswerHistory;
+import com.example._rdproject.domain.CefrLevelType;
+import com.example._rdproject.domain.ChatInputType;
+import com.example._rdproject.domain.LevelTestType;
 import com.example._rdproject.entity.User;
 import lombok.*;
 
@@ -15,8 +15,8 @@ public class LevelTestDto {
     @AllArgsConstructor
     public static class SaveRequest {
         private Long userId;
-        private TestType testType; // SELECT 또는 TEST
-        private AssignedLevel assignedLevel; // A1 ~ C2
+        private LevelTestType levelTestType; // SELECT 또는 TEST
+        private CefrLevelType cefrLevelType; // A1 ~ C2
         private Integer testScore; // 점수 (SELECT일 경우 null 가능)
     }
     @Getter
@@ -24,7 +24,7 @@ public class LevelTestDto {
     @AllArgsConstructor
     public static class StatusResponse {
         private Long userId;
-        private User.CefrLevel currentLevel;
+        private CefrLevelType currentLevel;
     }
 
     @Getter
@@ -53,6 +53,6 @@ public class LevelTestDto {
         private Long userId;
         private Long questionId;
         private String answerText;
-        private AnswerHistory.AnswerType answerType; // VOICE 또는 TEXT
+        private ChatInputType answerType; // VOICE 또는 TEXT
     }
 }

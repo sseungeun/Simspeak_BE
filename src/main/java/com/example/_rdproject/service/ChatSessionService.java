@@ -30,7 +30,7 @@ public class ChatSessionService {
 
         sessionRepository.save(session);
 
-        // 초기 대사 예시 (실제로는 DB 조회 로직 필요)
+        // 하드코딩
         var firstMessage = ChatSessionDto.FirstMessage.builder()
                 .textContent("Hey there! Welcome to the beach. Are you ready to surf?")
                 .actionDescription("서핑보드를 툭툭 치며 환하게 웃는다.")
