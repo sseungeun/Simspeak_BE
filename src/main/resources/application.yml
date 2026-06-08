@@ -1,12 +1,15 @@
 spring:
   datasource:
-    url: jdbc:mysql://team4-db.mysql.database.azure.com:3306/team4_db?serverTimezone=Asia/Seoul&useSSL=true&requireSSL=true&allowPublicKeyRetrieval=true
-    username: team4root
-    password: ${AZURE_MYSQL_PASSWORD}
+    url: jdbc:postgresql://ep-dawn-math-aqw8ex5x.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require
+    username: neondb_owner
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
+      naming:
+        # 물리적 네이밍 전략을 최신 표준으로 변경
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
     show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
