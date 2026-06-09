@@ -40,6 +40,11 @@ dependencies {
     testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
+tasks.named('bootJar') {
+    mainClass = 'com.example._rdproject.Application'
+}
+
+
+jar {
+    enabled = false
 }
