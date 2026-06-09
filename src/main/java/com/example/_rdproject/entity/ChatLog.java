@@ -42,6 +42,9 @@ public class ChatLog {
     @Column(name = "turn_count")
     private Integer turnCount;
 
+    @Column(name = "action_description", columnDefinition = "text")
+    private String actionDescription;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private ChatRoleType role;

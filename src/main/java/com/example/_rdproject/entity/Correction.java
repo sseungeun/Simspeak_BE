@@ -38,6 +38,9 @@ public class Correction {
     @Column(name = "translation", length = Integer.MAX_VALUE)
     private String translation;
 
+    @Column(name = "corrected_audio_url")
+    private String correctedAudioUrl;
+
     @ColumnDefault("false")
     @Column(name = "is_reviewed")
     private Boolean isReviewed;

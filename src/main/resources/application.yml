@@ -13,3 +13,5 @@ spring:
         # 물리적 네이밍 전략을 최신 표준으로 변경
         physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
     show-sql: true
+  file:
+    upload-dir: /temp/uploads/
