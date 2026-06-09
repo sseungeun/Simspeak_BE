@@ -1,5 +1,6 @@
 package com.example._rdproject.service;
 
+import com.example._rdproject.dto.ChatLogDto;
 import com.example._rdproject.dto.ChatMessageDto;
 import com.example._rdproject.domain.ChatRoleType;
 import com.example._rdproject.entity.*;
@@ -14,6 +15,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -104,5 +106,32 @@ public class ChatService {
             map.put("text_content", log.getTextContent());
             return map;
         }).toList();
+    }
+    @Transactional(readOnly = true)
+    public ChatLogDto.HistoryResponse getChatLogsBySessionId(String sessionId, Long userId) {
+        // 1. 세션 조회
+        List<ChatLog> logs = chatLogRepository.findBySessionIdOrderByCreatedAtAsc(sessionId);
+
+//         2. [보안] 세션의 주인이 요청한 userId와 일치하는지 검증하는 로직 추가
+         if (logs.size() > 0 && !logs.get(0).getUser().getId().equals(userId)) {
+             throw new IllegalArgumentException("본인의 세션만 조회할 수 있습니다.");
+         }
+
+        // 3. 매핑 및 응답
+        List<ChatLogDto.LogItem> logItems = logs.stream()
+                .map(log -> ChatLogDto.LogItem.builder()
+                        .message_id(log.getMessageId())
+                        .role(log.getRole())
+                        .input_type(log.getInputType())
+                        .text_content(log.getTextContent())
+                        .audio_url(log.getAudioUrl())
+                        .created_at(log.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ChatLogDto.HistoryResponse.builder()
+                .session_id(sessionId)
+                .logs(logItems)
+                .build();
     }
 }

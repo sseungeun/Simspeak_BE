@@ -6,6 +6,7 @@ import com.example._rdproject.domain.PenaltyReasonType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Getter
@@ -41,6 +42,9 @@ public class ChatLog {
     @Column(name = "turn_count")
     private Integer turnCount;
 
+    @Column(name = "action_description", columnDefinition = "text")
+    private String actionDescription;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private ChatRoleType role;
@@ -69,5 +73,5 @@ public class ChatLog {
     private PenaltyReasonType penaltyReason;
 
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 }

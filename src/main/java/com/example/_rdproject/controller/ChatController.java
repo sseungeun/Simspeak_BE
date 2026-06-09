@@ -1,5 +1,6 @@
 package com.example._rdproject.controller;
 
+import com.example._rdproject.dto.ChatLogDto;
 import com.example._rdproject.dto.ChatMessageDto;
 import com.example._rdproject.dto.ChatSessionDto;
 import com.example._rdproject.dto.common.CommonResponse;
@@ -8,10 +9,7 @@ import com.example._rdproject.service.ChatSessionService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -40,5 +38,19 @@ public class ChatController {
 
         // 성공 응답 반환
         return ResponseEntity.ok(CommonResponse.success("메시지 처리가 완료되었습니다.", response));
+    }
+    /**
+     * 유저 메시지 히스토리 조회
+     */
+    @Operation(summary = "메시지 히스토리 조회", description = "스테이지 대화 히스토리 조회 (이어하기/채팅방 진입용)")
+    @GetMapping("/sessions/{session_id}/logs")
+    public CommonResponse<ChatLogDto.HistoryResponse> getChatLogs(
+            @PathVariable("session_id") String sessionId,
+            @RequestParam("userId") Long userId) {
+
+        // 서비스 로직에서 userId 검증 및 로그 조회
+        ChatLogDto.HistoryResponse history = chatService.getChatLogsBySessionId(sessionId, userId);
+
+        return CommonResponse.success("지난 대화 로그를 성공적으로 불러왔습니다.", history);
     }
 }
