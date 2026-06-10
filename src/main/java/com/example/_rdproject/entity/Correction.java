@@ -1,5 +1,6 @@
 package com.example._rdproject.entity;
 
+import com.example._rdproject.domain.CorrectionType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
@@ -24,6 +25,13 @@ public class Correction {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chat_log_id")
     private ChatLog chatLog;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "correction_type", nullable = false)
+    private CorrectionType correctionType;
+
+    @Column(name = "session_id", nullable = false)
+    private String sessionId;
 
     @Column(name = "original_sentence", length = Integer.MAX_VALUE)
     private String originalSentence;
