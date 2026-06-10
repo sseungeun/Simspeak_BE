@@ -22,6 +22,7 @@ public class ChatSessionService {
 
         ChatSession session = ChatSession.builder()
                 .sessionId(sessionId)
+                .scenarioId(request.getScenarioId())
                 .userId(request.getUserId())
                 .stageId(request.getStageId())
                 .characterId(request.getCharacterId())
