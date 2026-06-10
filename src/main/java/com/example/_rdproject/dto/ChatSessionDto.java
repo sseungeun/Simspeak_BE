@@ -12,6 +12,7 @@ public class ChatSessionDto {
         private Long userId;
         private Long stageId;
         private String characterId;
+        private String scenarioId;
     }
 
     @Getter @Builder

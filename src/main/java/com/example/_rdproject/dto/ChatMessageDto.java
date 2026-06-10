@@ -23,7 +23,7 @@ public class ChatMessageDto {
         private String userLevel;
         private Integer turnCount;
         private Integer currentAffinity;
-        private List<Map<String, String>> history;
+        private List<HistoryItemDto> history;
     }
 
     @Getter @Builder
@@ -48,7 +48,6 @@ public class ChatMessageDto {
         @JsonProperty("audio_url")
         private String audioUrl;
 
-        // 새로 추가된 필드: 현재 전체 호감도
         @JsonProperty("current_total_affinity")
         private Integer currentTotalAffinity;
     }

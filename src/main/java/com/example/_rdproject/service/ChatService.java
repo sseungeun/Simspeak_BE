@@ -3,6 +3,7 @@ package com.example._rdproject.service;
 import com.example._rdproject.dto.ChatLogDto;
 import com.example._rdproject.dto.ChatMessageDto;
 import com.example._rdproject.domain.ChatRoleType;
+import com.example._rdproject.dto.HistoryItemDto;
 import com.example._rdproject.entity.*;
 import com.example._rdproject.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -99,13 +100,13 @@ public class ChatService {
         }
     }
 
-    private List<Map<String, String>> mapToHistory(List<ChatLog> logs) {
-        return logs.stream().map(log -> {
-            Map<String, String> map = new HashMap<>();
-            map.put("role", log.getRole() != null ? log.getRole().toString().toLowerCase() : "user");
-            map.put("text_content", log.getTextContent());
-            return map;
-        }).toList();
+    private List<HistoryItemDto> mapToHistory(List<ChatLog> logs) {
+        return logs.stream().map(log ->
+                HistoryItemDto.builder()
+                        .role(log.getRole() != null ? log.getRole().toString().toLowerCase() : "user")
+                        .text_content(log.getTextContent())
+                        .build()
+        ).toList();
     }
     @Transactional(readOnly = true)
     public ChatLogDto.HistoryResponse getChatLogsBySessionId(String sessionId, Long userId) {
