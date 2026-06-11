@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -53,6 +52,7 @@ public class ChatService {
                 .history(mapToHistory(historyLogs))
                 .build();
 
+        // AI 서버 통신 (1초 내 단건 응답)
         ChatMessageDto.Response aiResponse = aiServerWebClient.post()
                 .uri("/api/chat")
                 .bodyValue(aiRequest)
@@ -61,10 +61,25 @@ public class ChatService {
                 .block();
 
         if (aiResponse != null) {
+            // 1. 대화 로그 및 행동/호감도 변동량 저장
             saveAiResponseToLog(session, aiResponse);
+
+            // 2. 턴 수 1 증가
             status.setTurnCount(status.getTurnCount() + 1);
+
+            // 3. [v3.0 반영] AI 1차 응답에 포함된 호감도 즉시 갱신
+            if (aiResponse.getCurrentTotalAffinity() != null) {
+                // 서버에서 총 호감도를 계산해서 보내준 경우
+                status.setCurrentAffinity(aiResponse.getCurrentTotalAffinity());
+            } else if (aiResponse.getAffinityDelta() != null) {
+                // 서버에서 변동량(+3, -1 등)만 보내준 경우 기존 호감도에 더하기
+                status.setCurrentAffinity(status.getCurrentAffinity() + aiResponse.getAffinityDelta());
+            }
+
+            // 4. 상태 저장
             userCharacterStatusRepository.save(status);
         }
+
         return aiResponse;
     }
 
@@ -75,8 +90,11 @@ public class ChatService {
                 .role(ChatRoleType.assistant)
                 .textContent(response.getTextContent())
                 .audioUrl(response.getAudioUrl())
-                .grammarFeedback(response.getSystemEvaluation() != null ? response.getSystemEvaluation().getGrammarFeedback() : null)
-                .isPenalty(response.getSystemEvaluation() != null ? response.getSystemEvaluation().getIsPenalty() : null)
+                // v3.0: 1차 응답으로 즉시 넘어오는 행동 묘사와 호감도 변동량 저장
+                .actionDescription(response.getActionDescription())
+                .affinityDelta(response.getAffinityDelta())
+                .grammarFeedback(response.getSystemEvaluation() != null ? response.getSystemEvaluation().getGrammar_feedback() : null)
+                .isPenalty(response.getSystemEvaluation() != null ? response.getSystemEvaluation().isPenalty() : null)
                 .build();
         ChatLog savedLog = chatLogRepository.save(aiLog);
 
@@ -89,13 +107,13 @@ public class ChatService {
                 .build());
 
         // 3. 발음 점수 저장
-        if (response.getSystemEvaluation() != null && response.getSystemEvaluation().getPronunciationScore() != null) {
+        if (response.getSystemEvaluation() != null && response.getSystemEvaluation().getPronunciationEvaluations() != null) {
             pronunciationEvaluationRepository.save(PronunciationEvaluation.builder()
                     .chatLog(savedLog)
-                    .accuracy(response.getSystemEvaluation().getPronunciationScore().getAccuracy())
-                    .fluency(response.getSystemEvaluation().getPronunciationScore().getFluency())
-                    .completeness(response.getSystemEvaluation().getPronunciationScore().getCompleteness())
-                    .prosody(response.getSystemEvaluation().getPronunciationScore().getProsody())
+                    .accuracy(response.getSystemEvaluation().getPronunciationEvaluations().getAccuracy())
+                    .fluency(response.getSystemEvaluation().getPronunciationEvaluations().getFluency())
+                    .completeness(response.getSystemEvaluation().getPronunciationEvaluations().getCompleteness())
+                    .prosody(response.getSystemEvaluation().getPronunciationEvaluations().getProsody())
                     .build());
         }
     }
@@ -108,15 +126,16 @@ public class ChatService {
                         .build()
         ).toList();
     }
+
     @Transactional(readOnly = true)
     public ChatLogDto.HistoryResponse getChatLogsBySessionId(String sessionId, Long userId) {
         // 1. 세션 조회
         List<ChatLog> logs = chatLogRepository.findBySessionIdOrderByCreatedAtAsc(sessionId);
 
 //         2. [보안] 세션의 주인이 요청한 userId와 일치하는지 검증하는 로직 추가
-         if (logs.size() > 0 && !logs.get(0).getUser().getId().equals(userId)) {
-             throw new IllegalArgumentException("본인의 세션만 조회할 수 있습니다.");
-         }
+        if (logs.size() > 0 && !logs.get(0).getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("본인의 세션만 조회할 수 있습니다.");
+        }
 
         // 3. 매핑 및 응답
         List<ChatLogDto.LogItem> logItems = logs.stream()
