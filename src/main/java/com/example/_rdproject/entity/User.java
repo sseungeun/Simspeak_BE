@@ -65,4 +65,10 @@ public class User {
     public void updateLastCharacter(Character character) {
         this.lastCharacter = character;
     }
+
+    // --- [마이페이지 프로필 수정용 스위치 메서드] ---
+    public void updateProfile(String newNickname, com.example._rdproject.domain.GenderType newGender) {
+        this.nickname = newNickname;
+        this.preferredPartnerGender = newGender; 
+    }
 }
