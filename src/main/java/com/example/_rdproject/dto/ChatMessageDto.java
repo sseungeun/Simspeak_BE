@@ -25,7 +25,6 @@ public class ChatMessageDto {
         private Integer currentAffinity;
         private List<HistoryItemDto> history;
     }
-
     @Getter @Builder
     @AllArgsConstructor
     @NoArgsConstructor
@@ -42,8 +41,13 @@ public class ChatMessageDto {
         @JsonProperty("is_active")
         private Boolean isActive;
 
+        // 유저 발화 인식 텍스트 (프론트엔드 전달용)
+        @JsonProperty("user_recognized_text")
+        private String userRecognizedText;
+
+        // 알아서 null 처리
         @JsonProperty("system_evaluation")
-        private SystemEvaluation systemEvaluation;
+        private AiResponseDto.SystemEvaluation systemEvaluation;
 
         @JsonProperty("audio_url")
         private String audioUrl;
@@ -51,36 +55,10 @@ public class ChatMessageDto {
         @JsonProperty("current_total_affinity")
         private Integer currentTotalAffinity;
     }
-
-    @Getter @Setter
-    public static class SystemEvaluation {
-        @JsonProperty("grammar_feedback")
-        private String grammarFeedback;
-
-        @JsonProperty("is_penalty")
-        private Boolean isPenalty;
-
-        @JsonProperty("pronunciation_score")
-        private PronunciationScore pronunciationScore;
-    }
-
-    @Getter @Setter
     public static class PronunciationScore {
-        private Integer accuracy;
-        private Integer fluency;
-        private Integer completeness;
-        private Integer prosody;
-
-        @JsonProperty("word_details")
-        private List<WordDetail> wordDetails;
-    }
-
-    @Getter @Setter
-    public static class WordDetail {
-        private String word;
-        private Integer accuracy;
-
-        @JsonProperty("error_type")
-        private String errorType;
+        private Double accuracy;
+        private Double fluency;
+        private Double completeness;
+        private Double prosody;
     }
 }
