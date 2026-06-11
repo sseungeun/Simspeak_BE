@@ -89,7 +89,7 @@ public class UserService {
 
         // 3. String으로 들어온 성별(female)을 백엔드 전용 Enum 타입(FEMALE)으로 변환
         com.example._rdproject.domain.GenderType newGender = 
-            com.example._rdproject.domain.GenderType.valueOf(request.getPreferred_partner_gender().toUpperCase());
+            com.example._rdproject.domain.GenderType.valueOf(request.getPreferred_partner_gender().toLowerCase());
 
         // 4. 아까 Entity에 만들어둔 스위치를 눌러서 정보 업데이트!
         user.updateProfile(newNickname, newGender);
