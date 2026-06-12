@@ -30,9 +30,6 @@ public class Correction {
     @Column(name = "correction_type", nullable = false)
     private CorrectionType correctionType;
 
-    @Column(name = "session_id", nullable = false)
-    private String sessionId;
-
     @Column(name = "original_sentence", length = Integer.MAX_VALUE)
     private String originalSentence;
 

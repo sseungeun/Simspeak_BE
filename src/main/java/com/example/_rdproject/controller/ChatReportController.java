@@ -81,4 +81,26 @@ public class ChatReportController {
         AiResponseDto result = chatReportService.analyzeAndSave(request, audioFile);
         return ResponseEntity.ok(CommonResponse.success("음성 분석 및 저장이 완료되었습니다.", result));
     }
+
+    // 캐릭터별 세션(학습 기록) 목록 조회
+    @Operation(summary = "캐릭터별 학습 세션 목록 조회", description = "특정 캐릭터와 유저의 전체 학습 기록을 날짜별(Day) 리스트로 조회합니다.")
+    @GetMapping("/characters/{characterId}/sessions")
+    public ResponseEntity<CommonResponse<List<ReportDto.SessionSummaryResponse>>> getCharacterSessions(
+            @PathVariable String characterId,
+            @RequestParam Long userId) {
+
+        List<ReportDto.SessionSummaryResponse> list = chatReportService.getCharacterSessions(characterId, userId);
+        return ResponseEntity.ok(CommonResponse.success("세션 목록을 성공적으로 조회했습니다.", list));
+    }
+
+    // 세션 종료 처리 (엔딩)
+    @Operation(summary = "학습 세션 종료", description = "학습 세션을 최종 종료하고 최종 성적(호감도, 등급)을 확정합니다.")
+    @PostMapping("/sessions/{sessionId}/end")
+    public ResponseEntity<CommonResponse<ReportDto.SessionEndResponse>> endSession(
+            @PathVariable String sessionId) {
+
+        ReportDto.SessionEndResponse response = chatReportService.endSession(sessionId);
+        return ResponseEntity.ok(CommonResponse.success("세션이 성공적으로 종료되었습니다.", response));
+    }
+
 }

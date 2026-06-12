@@ -27,4 +27,22 @@ public class ReportDto {
         private String grammar_feedback;
         private String corrected_audio_url;
     }
+    @Getter @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SessionSummaryResponse {
+        private String session_id;
+        private Integer day_number;
+        private Integer latest_day;
+    }
+
+    // 세션 종료 처리용 DTO
+    @Getter @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SessionEndResponse {
+        private String session_id;
+        private Integer final_affinity;
+        private String achieved_level;
+    }
 }

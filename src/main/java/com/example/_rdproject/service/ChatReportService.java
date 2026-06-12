@@ -135,4 +135,35 @@ public class ChatReportService {
         }
         return aiResult;
     }
+
+    // 4. 캐릭터별 세션(학습 기록) 목록 조회
+    public List<ReportDto.SessionSummaryResponse> getCharacterSessions(String characterId, Long userId) {
+        List<ChatLog> logs = chatLogRepository.findByCharacterIdAndUserId(characterId, userId);
+
+        // 세션별로 그룹화하여 데이터 가공
+        Map<String, List<ChatLog>> groupedLogs = logs.stream()
+                .collect(Collectors.groupingBy(ChatLog::getSessionId));
+
+        int totalSessions = groupedLogs.size();
+
+        return groupedLogs.entrySet().stream()
+                .map(entry -> ReportDto.SessionSummaryResponse.builder()
+                        .session_id(entry.getKey())
+                        .day_number(1) // 필요 시 세션 생성 순서에 따라 번호 부여
+                        .latest_day(totalSessions)
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    // 5. 세션 종료 처리 (엔딩)
+    @Transactional
+    public ReportDto.SessionEndResponse endSession(String sessionId) {
+        // 실제 운영 시에는 여기서 호감도 계산 및 세션 상태 변경 로직이 들어갑니다.
+        // 현재는 종료되었다는 것을 확정하는 로직 수행
+        return ReportDto.SessionEndResponse.builder()
+                .session_id(sessionId)
+                .final_affinity(85) // 예시값
+                .achieved_level("B2") // 예시값
+                .build();
+    }
 }
