@@ -19,6 +19,9 @@ public class CharacterDto {
         private CefrLevelType currentLevel;
         private Integer continuousDays;
         private List<CharacterStatusResponse> characters;
+
+        private Long totalConversations;
+        private Double avgPronunciationScore;
     }
 
     // 1-1. 메인 화면 속 개별 캐릭터 정보 DTO
