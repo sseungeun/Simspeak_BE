@@ -53,4 +53,16 @@ public class ChatController {
 
         return CommonResponse.success("지난 대화 로그를 성공적으로 불러왔습니다.", history);
     }
+
+    @Operation(summary = "이어하기 세션 조회", description = "특정 유저와 스테이지의 최근(미완료) 세션 ID를 반환합니다. 없으면 null을 반환합니다.")
+    @GetMapping("/sessions/active")
+    public ResponseEntity<CommonResponse<ChatSessionDto.ActiveSessionResponse>> getActiveSession(
+            @RequestParam("userId") Long userId,
+            @RequestParam("stageId") Long stageId) {
+
+        ChatSessionDto.ActiveSessionResponse response = chatSessionService.getActiveSession(userId, stageId);
+
+        String msg = response.getSessionId() != null ? "진행 중인 세션을 찾았습니다." : "진행 중인 세션이 없습니다.";
+        return ResponseEntity.ok(CommonResponse.success(msg, response));
+    }
 }

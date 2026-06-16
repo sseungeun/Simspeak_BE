@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 public class ChatSession {
     @Id
     @Column(name = "session_id")
-    private String sessionId; // "sess_leo_20260526_999"
+    private String sessionId;
 
     @Column(name = "user_id")
     private Long userId;
@@ -36,4 +36,9 @@ public class ChatSession {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "is_completed")
+    @Builder.Default
+    private Boolean isCompleted = false;
 }
+

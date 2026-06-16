@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -41,6 +42,26 @@ public class ChatSessionService {
         return ChatSessionDto.CreateResponse.builder()
                 .sessionId(sessionId)
                 .firstMessage(firstMessage)
+                .build();
+    }
+    @Transactional
+    public ChatSessionDto.ActiveSessionResponse getActiveSession(Long userId, Long stageId) {
+        Optional<ChatSession> sessionOpt = sessionRepository.findFirstByUserIdAndStageIdOrderByCreatedAtDesc(userId, stageId);
+
+        // 1. 세션이 아예 없는 경우 -> 프론트에서 새 세션을 시작하도록 유도
+        if (sessionOpt.isEmpty()) {
+            return ChatSessionDto.ActiveSessionResponse.builder()
+                    .sessionId(null)
+                    .isCompleted(true)
+                    .build();
+        }
+
+        // 2. 세션이 있는 경우 -> ID와 완료 여부 반환
+        ChatSession session = sessionOpt.get();
+        return ChatSessionDto.ActiveSessionResponse.builder()
+                .sessionId(session.getSessionId())
+                // null 방어: DB에 null로 들어있으면 false로 취급
+                .isCompleted(session.getIsCompleted() != null ? session.getIsCompleted() : false)
                 .build();
     }
 }
