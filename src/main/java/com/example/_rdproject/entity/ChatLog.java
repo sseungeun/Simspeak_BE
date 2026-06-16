@@ -1,13 +1,13 @@
 package com.example._rdproject.entity;
 
-import com.example._rdproject.domain.ChatInputType;
-import com.example._rdproject.domain.ChatRoleType;
-import com.example._rdproject.domain.PenaltyReasonType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -15,15 +15,13 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "chat_log")
+@Table(name = "chat_logs") // 테이블명 복수형으로 맞춤
 public class ChatLog {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
-
-    @Column(name = "message_id", unique = true)
-    private String messageId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -33,45 +31,45 @@ public class ChatLog {
     @JoinColumn(name = "character_id")
     private Character character;
 
-    @Column(name = "session_id")
-    private String sessionId;
-
-    @Column(name = "scenario_id")
-    private String scenarioId;
-
     @Column(name = "turn_count")
     private Integer turnCount;
 
-    @Column(name = "action_description", columnDefinition = "text")
-    private String actionDescription;
+    @Column(name = "session_id", nullable = false) // 필수 컬럼으로 설정
+    private String sessionId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role")
-    private ChatRoleType role;
+    @Column(name = "user_text", columnDefinition = "text")
+    private String userText;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "input_type")
-    private ChatInputType inputType;
+    @Column(name = "user_audio_url", columnDefinition = "text")
+    private String userAudioUrl;
 
-    @Column(name = "text_content", columnDefinition = "text")
-    private String textContent;
+    @Column(name = "ai_text_content", columnDefinition = "text")
+    private String aiTextContent;
 
-    @Column(name = "audio_url")
-    private String audioUrl;
+    @Column(name = "ai_audio_url", columnDefinition = "text")
+    private String aiAudioUrl;
+
+    @Column(name = "current_affinity")
+    private Integer currentAffinity;
+
+    @Column(name = "summary_context", columnDefinition = "text")
+    private String summaryContext;
+
+    @Column(name = "stage_id", length = 50)
+    private String stageId;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "chat_history_context", columnDefinition = "jsonb")
+    private Map<String, Object> chatHistoryContext;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "raw_llm_log", columnDefinition = "jsonb")
+    private Map<String, Object> rawLlmLog;
 
     @Column(name = "grammar_feedback", columnDefinition = "text")
     private String grammarFeedback;
 
-    @Column(name = "is_penalty")
-    private Boolean isPenalty;
-
-    @Column(name = "affinity_delta")
-    private Integer affinityDelta;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "penalty_reason")
-    private PenaltyReasonType penaltyReason;
-
-    @Column(name = "created_at")
-    private Instant createdAt;
+    @CreationTimestamp // 자동으로 생성 시간 저장
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 }

@@ -1,5 +1,6 @@
 package com.example._rdproject.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,10 +22,15 @@ public class ReportDto {
 
     @Getter @Builder
     public static class CorrectionItem {
+        @JsonProperty("correction_id")
         private Long correction_id;
+        @JsonProperty("original_sentence")
         private String original_sentence;
+        @JsonProperty("corrected_sentence")
         private String corrected_sentence;
+        @JsonProperty("grammar_feedback")
         private String grammar_feedback;
+        @JsonProperty("corrected_audio_url")
         private String corrected_audio_url;
     }
     @Getter @Builder

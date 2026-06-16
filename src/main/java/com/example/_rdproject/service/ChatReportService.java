@@ -22,25 +22,37 @@ public class ChatReportService {
 
     private final ChatLogRepository chatLogRepository;
     private final CorrectionRepository correctionRepository;
-    private final PronunciationEvaluationRepository evaluationRepository;
     private final UserRepository userRepository;
     private final RawAiResponseRepository rawAiResponseRepository;
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     private final LocalFileService fileService;
 
-    // 1. 세션 리포트 조회
     public ReportDto.SessionReportResponse getSessionReport(String sessionId, Long userId) {
         List<Correction> corrections = correctionRepository.findByChatLog_SessionId(sessionId);
 
         List<ReportDto.CorrectionItem> items = corrections.stream()
-                .map(c -> ReportDto.CorrectionItem.builder()
-                        .correction_id(c.getId())
-                        .original_sentence(c.getOriginalSentence())
-                        .corrected_sentence(c.getCorrectedSentence())
-                        .corrected_audio_url(c.getCorrectedAudioUrl()) // 추가된 필드 반영
-                        .grammar_feedback(c.getChatLog().getGrammarFeedback())
-                        .build())
+                .map(c -> {
+                    // JSON 파싱 로직
+                    String feedback = null;
+                    try {
+                        if (c.getCorrectionsJson() != null) {
+                            // DB에 저장된 JSON(String)을 Map으로 변환
+                            Map<String, Object> map = c.getCorrectionsJson();
+                            feedback = (String) map.get("grammar_feedback"); // JSON 내 키값에 맞춰 수정
+                        }
+                    } catch (Exception e) {
+                        feedback = "피드백을 불러올 수 없습니다.";
+                    }
+
+                    return ReportDto.CorrectionItem.builder()
+                            .correction_id(c.getId())
+                            .original_sentence(c.getOriginalSentence())
+                            .corrected_sentence(c.getCorrectedSentence())
+                            .corrected_audio_url(c.getCorrectedAudioUrl())
+                            .grammar_feedback(feedback) // ◀ 여기서 추출한 feedback을 넣어줍니다
+                            .build();
+                })
                 .collect(Collectors.toList());
 
         return ReportDto.SessionReportResponse.builder()
@@ -48,7 +60,6 @@ public class ChatReportService {
                 .corrections(items)
                 .build();
     }
-
     // 2. 오답 노트 업데이트
     @Transactional
     public CorrectionDto.CorrectionUpdateResponse updateCorrection(Long correctionId, CorrectionDto.CorrectionUpdateRequest req) {
@@ -97,9 +108,9 @@ public class ChatReportService {
         // 3. ChatLog 저장
         ChatLog chatLog = ChatLog.builder()
                 .user(user)
-                .textContent(request.getText())
-                .audioUrl(audioUrl)
-                .actionDescription(request.getActionDescription())
+                .userText(request.getText())
+                .userAudioUrl(audioUrl)
+
                 .build();
         chatLogRepository.save(chatLog);
 
@@ -122,13 +133,13 @@ public class ChatReportService {
                 .build());
 
         // 6. Correction 저장
-        if (aiResult.getSystemEvaluation() != null && aiResult.getSystemEvaluation().getCorrections_json() != null) {
-            for (AiResponseDto.CorrectionItem item : aiResult.getSystemEvaluation().getCorrections_json()) {
+        if (aiResult.getSystemEvaluation() != null && aiResult.getSystemEvaluation().getCorrectionsJson() != null) {
+            for (AiResponseDto.CorrectionItem item : aiResult.getSystemEvaluation().getCorrectionsJson()) {
                 correctionRepository.save(Correction.builder()
                         .chatLog(chatLog)
-                        .originalSentence(item.getOriginal_sentence())
-                        .correctedSentence(item.getCorrected_sentence())
-                        .correctedAudioUrl(item.getCorrected_audio_url())
+                        .originalSentence(item.getOriginalSentence()) // 카멜 케이스로 수정
+                        .correctedSentence(item.getCorrectedSentence()) // 카멜 케이스로 수정
+                        .correctedAudioUrl(item.getCorrectedAudioUrl()) // 카멜 케이스로 수정
                         .isReviewed(false)
                         .build());
             }

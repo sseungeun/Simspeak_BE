@@ -3,6 +3,7 @@ package com.example._rdproject.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 public class AiResponseDto {
@@ -35,21 +36,44 @@ public class AiResponseDto {
 
     @Getter
     public static class SystemEvaluation {
+        @JsonProperty("detected_invalid_words")
+        private List<String> detectedInvalidWords;
+
         @JsonProperty("is_penalty")
         private boolean isPenalty;
-        private String grammar_feedback;
-        private String pronunciation_feedback;
-        private List<CorrectionItem> corrections_json;
+
+        @JsonProperty("grammar_feedback")
+        private String grammarFeedback;
+
+        @JsonProperty("pronunciation_feedback")
+        private String pronunciationFeedback;
+
+        @JsonProperty("corrections_json")
+        private List<CorrectionItem> correctionsJson;
+
+        @JsonProperty("ipa_guides")
+        private Map<String, String> ipaGuides;
 
         @JsonProperty("pronunciation_evaluations")
         private PronunciationEvaluations pronunciationEvaluations;
+
+        @JsonProperty("affinity_delta")
+        private int affinityDelta;
+
+        @JsonProperty("current_total_affinity")
+        private int currentTotalAffinity;
     }
 
     @Getter
     public static class CorrectionItem {
-        private String original_sentence;
-        private String corrected_sentence;
-        private String corrected_audio_url;
+        @JsonProperty("original_sentence")
+        private String originalSentence;
+
+        @JsonProperty("corrected_sentence")
+        private String correctedSentence;
+
+        @JsonProperty("corrected_audio_url")
+        private String correctedAudioUrl;
     }
 
     @Getter
@@ -67,7 +91,8 @@ public class AiResponseDto {
     public static class WordDetail {
         private String word;
         private int accuracy;
-        private String error_type;
+        @JsonProperty("error_type")
+        private String errorType;
         private String guide;
     }
 }

@@ -10,7 +10,7 @@ public class WebClientConfig {
     @Bean
     public WebClient aiServerWebClient() {
         return WebClient.builder()
-                .baseUrl("https://smbvtpnv-8000.jpe1.devtunnels.ms")
+                .baseUrl("https://simspeak-production.up.railway.app")
                 .build();
     }
 }

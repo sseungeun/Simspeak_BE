@@ -3,11 +3,28 @@ package com.example._rdproject.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import java.util.List;
-import java.util.Map;
 
 public class ChatMessageDto {
 
-    // --- Request DTO ---
+    // --- AI 서버 전송용 Request (사진 스펙 반영) ---
+    @Getter @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class AiRequest {
+        @JsonProperty("user_id")
+        private int userId;
+        @JsonProperty("character_id")
+        private String characterId;
+        private String text;
+        @JsonProperty("is_video_call")
+        private boolean isVideoCall;
+        @JsonProperty("user_audio_url")
+        private String userAudioUrl;
+        @JsonProperty("stage_id")
+        private int stageId;
+    }
+
+    // --- 기존 서비스 로직용 Request (유지) ---
     @Getter @NoArgsConstructor
     @Builder
     @AllArgsConstructor
@@ -23,8 +40,11 @@ public class ChatMessageDto {
         private String userLevel;
         private Integer turnCount;
         private Integer currentAffinity;
+        private String userAudioUrl;
         private List<HistoryItemDto> history;
     }
+
+    // --- 응답 DTO (AI 응답 JSON 명세에 맞춤) ---
     @Getter @Builder
     @AllArgsConstructor
     @NoArgsConstructor
@@ -38,27 +58,25 @@ public class ChatMessageDto {
         @JsonProperty("affinity_delta")
         private Integer affinityDelta;
 
-        @JsonProperty("is_active")
-        private Boolean isActive;
+        @JsonProperty("current_total_affinity")
+        private Integer currentTotalAffinity;
 
-        // 유저 발화 인식 텍스트 (프론트엔드 전달용)
         @JsonProperty("user_recognized_text")
         private String userRecognizedText;
-
-        // 알아서 null 처리
-        @JsonProperty("system_evaluation")
-        private AiResponseDto.SystemEvaluation systemEvaluation;
 
         @JsonProperty("audio_url")
         private String audioUrl;
 
-        @JsonProperty("current_total_affinity")
-        private Integer currentTotalAffinity;
+        @JsonProperty("model_info")
+        private String modelInfo;
+
+        @JsonProperty("system_evaluation")
+        private AiResponseDto.SystemEvaluation systemEvaluation;
     }
     public static class PronunciationScore {
-        private Double accuracy;
-        private Double fluency;
-        private Double completeness;
-        private Double prosody;
+        private int accuracy;
+        private int fluency;
+        private int completeness;
+        private int prosody;
     }
 }
