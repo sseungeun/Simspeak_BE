@@ -21,6 +21,8 @@ public class CharacterService {
     private final StageRepository stageRepository;
     private final CharacterRepository characterRepository;
     private final UserStageProgressRepository userStageProgressRepository;
+    private final ChatSessionRepository chatSessionRepository;
+    private final PronunciationEvaluationRepository pronunciationEvaluationRepository;
 
     @Transactional
     public CharacterDto.MainStatusResponse getMainStatus(Long userId) {
@@ -58,13 +60,27 @@ public class CharacterService {
                             c.getStatWit() != null ? c.getStatWit() : 0          // null 체크 추가
                     );
                 }).collect(Collectors.toList());
+        // 1. 총 대화 횟수 가져오기
+        Long totalConversations = chatSessionRepository.countByUserId(userId);
+
+        // 2. 평균 발음 점수 가져오기
+        Double avgScore = pronunciationEvaluationRepository.findAverageScoreByUserId(userId);
+
+        // 발음 기록이 아예 없는 신규 유저일 경우 null이 반환되므로 0.0으로 방어 처리
+        if (avgScore == null) {
+            avgScore = 0.0;
+        } else {
+            avgScore = Math.round(avgScore * 10) / 10.0;
+        }
 
         return new CharacterDto.MainStatusResponse(
                 user.getId(),
                 user.getNickname(),
                 user.getCurrentLevel(),
                 user.getContinuousDays(),
-                characterStatuses
+                characterStatuses,
+                totalConversations,
+                avgScore
         );
     }
 
