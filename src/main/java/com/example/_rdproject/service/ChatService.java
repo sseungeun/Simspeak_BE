@@ -2,12 +2,14 @@ package com.example._rdproject.service;
 
 import com.example._rdproject.dto.ChatLogDto;
 import com.example._rdproject.dto.ChatMessageDto;
+import com.example._rdproject.dto.EvaluationDto;
 import com.example._rdproject.dto.HistoryItemDto;
 import com.example._rdproject.entity.*;
 import com.example._rdproject.entity.Character;
 import com.example._rdproject.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -19,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static reactor.netty.http.HttpConnectionLiveness.log;
 
 @Service
 @RequiredArgsConstructor
@@ -37,13 +38,16 @@ public class ChatService {
     private final WebClient aiServerWebClient;
     private final ObjectMapper objectMapper;
 
+    @Value("${ai-server.api-key}")
+    private String aiApiKey;
+
     @Transactional
-    public ChatMessageDto.Response processMessage(ChatMessageDto.Request request) {
+    public ChatMessageDto.FrontendResponse processMessage(ChatMessageDto.Request request) {
         ChatSession session = sessionRepository.findById(request.getSessionId())
                 .orElseThrow(() -> new IllegalArgumentException("세션을 찾을 수 없습니다."));
 
         log.info("AI 서버로 보내는 데이터: userId={}, characterId={}, text={}, stageId={}",
-                session.getUserId(), session.getCharacterId(), request.getTextContent(), session.getStageId());
+                session.getUserId(), session.getCharacterId(), request.getText(), session.getStageId());
 
         User user = userRepository.findById(session.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
@@ -80,42 +84,109 @@ public class ChatService {
 //                .currentAffinity(status.getCurrentAffinity())
 //                .history(mapToHistory(historyLogs))
 //                .build();
+        List<HistoryItemDto> historyList = mapToHistory(historyLogs);
+        if (historyList == null || historyList.isEmpty()) {
+            historyList = new ArrayList<>(); // 빈 리스트라도 확실히 넘겨야 합니다.
+        }
         ChatMessageDto.AiRequest aiRequest = ChatMessageDto.AiRequest.builder()
                 .userId(session.getUserId().intValue())
                 .characterId(session.getCharacterId())
-                .text(request.getTextContent())
+                .text(request.getText())
                 .isVideoCall(true)
                 .userAudioUrl(request.getUserAudioUrl())
                 .stageId(session.getStageId().intValue())
+                .history(historyList)
                 .build();
 
         // AI 서버 통신
         ChatMessageDto.Response aiResponse = aiServerWebClient.post()
                 .uri("/api/v1/chat/message")
                 .bodyValue(aiRequest)
+                .header("X-API-KEY", aiApiKey)
                 .retrieve()
                 .bodyToMono(ChatMessageDto.Response.class)
                 .block();
 
         if (aiResponse != null) {
+            log.info("AI 서버 원본 응답: {}", aiResponse);
+        } else {
+            log.warn("AI 서버로부터 응답이 null입니다.");
+        }
+
+        // 프론트엔드로 보낼 최종 응답 객체 선언
+        ChatMessageDto.FrontendResponse frontendResponse = null;
+
+        if (aiResponse != null) {
             // 1. 대화 로그 저장
             saveAiResponseToLog(session, request, aiResponse, historyLogs);
-
             // 2. 턴 수 1 증가
             status.setTurnCount(status.getTurnCount() + 1);
-
             // 3. AI 1차 응답에 포함된 호감도 즉시 갱신
             if (aiResponse.getCurrentTotalAffinity() != null) {
                 status.setCurrentAffinity(aiResponse.getCurrentTotalAffinity());
             } else if (aiResponse.getAffinityDelta() != null) {
                 status.setCurrentAffinity(status.getCurrentAffinity() + aiResponse.getAffinityDelta());
             }
-
             // 4. 상태 저장
             userCharacterStatusRepository.save(status);
+
+            EvaluationDto.Response evalResponse = null;
+            var aiEval = aiResponse.getSystemEvaluation(); // AI가 준 원본 데이터
+
+            if (aiEval != null) {
+                // [A] 문법 포장
+                EvaluationDto.GrammarInfo grammar = EvaluationDto.GrammarInfo.builder()
+                        .grammarFeedback(aiEval.getGrammarFeedback())
+                        .build();
+
+                // [B] 표현 포장
+                List<EvaluationDto.CorrectionItem> correctionItems = new ArrayList<>();
+                if (aiEval.getCorrectionsJson() != null) {
+                    correctionItems = aiEval.getCorrectionsJson().stream()
+                            .map(c -> EvaluationDto.CorrectionItem.builder()
+                                    .originalSentence(c.getOriginalSentence())
+                                    .correctedSentence(c.getCorrectedSentence())
+                                    .correctedAudioUrl(c.getCorrectedAudioUrl())
+                                    .build())
+                            .collect(Collectors.toList());
+                }
+                EvaluationDto.ExpressionInfo expression = EvaluationDto.ExpressionInfo.builder()
+                        .correctionsJson(correctionItems)
+                        .detectedInvalidWords(aiEval.getDetectedInvalidWords())
+                        .build();
+
+                // [C] 발음 포장
+                EvaluationDto.PronunciationInfo pronunciation = null;
+                if (aiEval.getPronunciationEvaluations() != null) {
+                    pronunciation = EvaluationDto.PronunciationInfo.builder()
+                            .accuracy(aiEval.getPronunciationEvaluations().getAccuracy())
+                            .fluency(aiEval.getPronunciationEvaluations().getFluency())
+                            // wordDetails 가져오는 메서드명은 실제 AiResponseDto에 맞게 수정하세요
+                            .wordDetailsJson(aiEval.getPronunciationEvaluations().getWordDetails())
+                            .build();
+                }
+
+                // 3개 그룹 합체!
+                evalResponse = EvaluationDto.Response.builder()
+                        .grammar(grammar)
+                        .expression(expression)
+                        .pronunciation(pronunciation)
+                        .build();
+            }
+
+            // 최종적으로 프론트엔드에 보낼 객체 완성
+            frontendResponse = ChatMessageDto.FrontendResponse.builder()
+                    .text(aiResponse.getText())
+                    .actionDescription(aiResponse.getActionDescription())
+                    .affinityDelta(aiResponse.getAffinityDelta())
+                    .currentTotalAffinity(aiResponse.getCurrentTotalAffinity())
+                    .audioUrl(aiResponse.getAudioUrl())
+                    .systemEvaluation(evalResponse) // 그룹화된 데이터 탑재!
+                    .build();
         }
 
-        return aiResponse;
+        // 기존 return aiResponse; 대신 새 객체 반환
+        return frontendResponse;
     }
 
     private void saveAiResponseToLog(ChatSession session, ChatMessageDto.Request userRequest, ChatMessageDto.Response aiResponse, List<ChatLog> historyLogs) {
@@ -136,10 +207,10 @@ public class ChatService {
         ChatLog aiLog = ChatLog.builder()
                 .user(user)
                 .character(character)
-                .userText(userRequest.getTextContent())
+                .userText(userRequest.getText())
                 .sessionId(session.getSessionId())
                 .createdAt(LocalDateTime.now())
-                .aiTextContent(aiResponse.getTextContent())
+                .aiTextContent(aiResponse.getText())
                 .aiAudioUrl(aiResponse.getAudioUrl())
                 .currentAffinity(aiResponse.getCurrentTotalAffinity())
                 .grammarFeedback(aiResponse.getSystemEvaluation() != null ?
@@ -179,14 +250,14 @@ public class ChatService {
             if (log.getUserText() != null && !log.getUserText().isEmpty()) {
                 historyList.add(HistoryItemDto.builder()
                         .role("user")
-                        .text_content(log.getUserText())
+                        .text(log.getUserText())
                         .build());
             }
             // 2. AI 발화 세팅
             if (log.getAiTextContent() != null && !log.getAiTextContent().isEmpty()) {
                 historyList.add(HistoryItemDto.builder()
                         .role("assistant")
-                        .text_content(log.getAiTextContent())
+                        .text(log.getAiTextContent())
                         .build());
             }
         }

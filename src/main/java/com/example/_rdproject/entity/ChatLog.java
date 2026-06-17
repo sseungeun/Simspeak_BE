@@ -15,7 +15,7 @@ import java.util.Map;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "chat_logs") // 테이블명 복수형으로 맞춤
+@Table(name = "chat_logs")
 public class ChatLog {
 
     @Id
@@ -34,7 +34,7 @@ public class ChatLog {
     @Column(name = "turn_count")
     private Integer turnCount;
 
-    @Column(name = "session_id", nullable = false) // 필수 컬럼으로 설정
+    @Column(name = "session_id", nullable = false)
     private String sessionId;
 
     @Column(name = "user_text", columnDefinition = "text")

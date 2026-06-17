@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import java.util.List;
 
+@ToString
 public class ChatMessageDto {
 
     // --- AI 서버 전송용 Request (사진 스펙 반영) ---
@@ -22,6 +23,8 @@ public class ChatMessageDto {
         private String userAudioUrl;
         @JsonProperty("stage_id")
         private int stageId;
+
+        private List<HistoryItemDto> history;
     }
 
     // --- 기존 서비스 로직용 Request (유지) ---
@@ -30,7 +33,7 @@ public class ChatMessageDto {
     @AllArgsConstructor
     public static class Request {
         private String sessionId;
-        private String textContent;
+        private String text;
         private String inputType;
         private String characterId;
         private String scenarioId;
@@ -44,13 +47,13 @@ public class ChatMessageDto {
         private List<HistoryItemDto> history;
     }
 
-    // --- 응답 DTO (AI 응답 JSON 명세에 맞춤) ---
+    // --- 응답 DTO (AI 서버에서 들어오는 원본 응답) ---
     @Getter @Builder
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Response {
-        @JsonProperty("text_content")
-        private String textContent;
+        @JsonProperty("text")
+        private String text;
 
         @JsonProperty("action_description")
         private String actionDescription;
@@ -73,6 +76,33 @@ public class ChatMessageDto {
         @JsonProperty("system_evaluation")
         private AiResponseDto.SystemEvaluation systemEvaluation;
     }
+    @Getter @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class FrontendResponse {
+        @JsonProperty("text")
+        private String text;
+
+        @JsonProperty("action_description")
+        private String actionDescription;
+
+        @JsonProperty("affinity_delta")
+        private Integer affinityDelta;
+
+        @JsonProperty("current_total_affinity")
+        private Integer currentTotalAffinity;
+
+        @JsonProperty("audio_url")
+        private String audioUrl;
+
+        // (Grammar, Expression, Pronunciation)
+        @JsonProperty("system_evaluation")
+        private EvaluationDto.Response systemEvaluation;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class PronunciationScore {
         private int accuracy;
         private int fluency;

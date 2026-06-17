@@ -15,3 +15,6 @@ spring:
     show-sql: true
   file:
     upload-dir: /temp/uploads/
+
+  ai-server:
+    api-key: ${ai-server.api-key}
