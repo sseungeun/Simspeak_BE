@@ -50,15 +50,13 @@ public class LevelTestController {
     }
 
     // 답변 제출 API
-    @Operation(summary = "레벨 테스트 답변 제출", description = "주관식/음성 문항에 대한 답변을 저장합니다.")
+    @Operation(summary = "레벨 테스트 답변 제출", description = "주관식/음성 문항에 대한 답변을 저장하고 AI 평가를 반환합니다.")
     @PostMapping("/answer")
-    public ResponseEntity<CommonResponse<Void>> submitAnswer(@RequestBody LevelTestDto.SubmitAnswerRequest request) {
-        // AnswerType 제거에 맞춰 인자 3개만 전달
-        levelTestService.submitAnswer(
-                request.getUserId(),
-                request.getQuestionId(),
-                request.getAnswerText()
-        );
-        return ResponseEntity.ok(CommonResponse.success("답변이 저장되었습니다.", null));
+    public ResponseEntity<CommonResponse<LevelTestDto.AiLevelTestResponse>> submitAnswer(@RequestBody LevelTestDto.SubmitAnswerRequest request) {
+
+        // 기존의 단순 저장이 아닌, AI 평가까지 수행하는 서비스 메서드 호출
+        LevelTestDto.AiLevelTestResponse aiResponse = levelTestService.submitAndEvaluateAnswer(request);
+
+        return ResponseEntity.ok(CommonResponse.success("답변 평가가 성공적으로 완료되었습니다.", aiResponse));
     }
 }

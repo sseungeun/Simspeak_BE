@@ -29,7 +29,7 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/users/**",
                                 "/api/characters/**",
-                                "/api/level-test/**",
+                                "/api/level-tests/**",
 
                                 // ==========================================
                                 // 2. 채팅 및 세션 진행 관련 API

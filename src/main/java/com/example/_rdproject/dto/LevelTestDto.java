@@ -4,9 +4,11 @@ import com.example._rdproject.domain.CefrLevelType;
 import com.example._rdproject.domain.ChatInputType;
 import com.example._rdproject.domain.LevelTestType;
 import com.example._rdproject.entity.User;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.util.List;
+import java.util.Map;
 
 public class LevelTestDto {
 
@@ -54,5 +56,64 @@ public class LevelTestDto {
         private Long questionId;
         private String answerText;
         private ChatInputType answerType; // VOICE 또는 TEXT
+
+        private String characterId;
+        private Integer currentQuestionIndex;
+        private String userAudioUrl;
+        private List<String> accumulatedAnswers;
+        private Boolean isQuit;
     }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class AiLevelTestRequest {
+        @JsonProperty("user_id")
+        private Integer userId;
+
+        @JsonProperty("character_id")
+        private String characterId;
+
+        @JsonProperty("current_question_index")
+        private Integer currentQuestionIndex;
+
+        @JsonProperty("user_text")
+        private String userText;
+
+        @JsonProperty("user_audio_url")
+        private String userAudioUrl;
+
+        @JsonProperty("accumulated_answers")
+        private List<String> accumulatedAnswers;
+
+        @JsonProperty("is_quit")
+        private Boolean isQuit;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AiLevelTestResponse {
+        @JsonProperty("user_recognized_text")
+        private String userRecognizedText;
+
+        @JsonProperty("pronunciation_evaluations")
+        private PronunciationEvaluations pronunciationEvaluations;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PronunciationEvaluations {
+        private int accuracy;
+        private int fluency;
+        private int completeness;
+        private int prosody;
+
+        @JsonProperty("word_details_json")
+        private List<Map<String, Object>> wordDetailsJson;
+    }
+
+
 }
