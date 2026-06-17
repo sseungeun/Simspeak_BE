@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+
+  k6:
+    image: grafana/k6:latest
+    volumes:
+      - ./tests:/tests:ro
+    command: run /tests/load-test.js
+    depends_on:
+      - backend
