@@ -1,5 +1,6 @@
 package com.example._rdproject.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,9 +10,13 @@ import lombok.NoArgsConstructor;
 public class AuthDto {
     @Getter
     public static class SignupRequest {
+        @JsonProperty("login_id")
         private String login_id;
+
         private String password;
         private String nickname;
+
+        @JsonProperty("preferred_partner_gender")
         private String preferred_partner_gender; // "male" or "female"
     }
 
@@ -22,9 +27,12 @@ public class AuthDto {
         private String login_id;
         private String nickname;
     }
+
     @Getter
     public static class LoginRequest {
+        @JsonProperty("login_id")
         private String login_id;
+
         private String password;
     }
 
