@@ -70,6 +70,10 @@ public class ChatService {
             status = userCharacterStatusRepository.save(newStatus);
         }
 
+        if (request.getText() == null) {
+            throw new IllegalArgumentException("사용자 메시지(text)가 비어있거나 올바르게 전달되지 않았습니다.");
+        }
+
         List<ChatLog> historyLogs = chatLogRepository.findBySessionIdOrderByTurnCountAsc(request.getSessionId());
 
 //        ChatMessageDto.Request aiRequest = ChatMessageDto.Request.builder()
@@ -97,6 +101,13 @@ public class ChatService {
                 .stageId(session.getStageId().intValue())
                 .history(historyList)
                 .build();
+
+        try {
+            log.info("--- [AI 전송 데이터] ---");
+            log.info("전송 JSON: {}", objectMapper.writeValueAsString(aiRequest));
+        } catch (Exception e) {
+            log.error("JSON 변환 실패: {}", e.getMessage());
+        }
 
         // AI 서버 통신
         ChatMessageDto.Response aiResponse = aiServerWebClient.post()
