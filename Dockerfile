@@ -1,16 +1,15 @@
-# 1. 빌드 단계 (Gradle 빌드)
+# 1. 빌드 단계
 FROM gradle:8.10-jdk17 AS build
 COPY --chown=gradle:gradle . /home/gradle/src
 WORKDIR /home/gradle/src
-RUN gradle build --no-daemon -x test
+# bootJar를 명시적으로 실행하여 jar 파일을 생성
+RUN gradle bootJar --no-daemon -x test
 
-# 2. 실행 단계 (경량화된 자바 이미지)
+# 2. 실행 단계
 FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
 
-# 빌드 단계에서 생성된 jar 파일 복사
-# 💡 'build/libs/3rdProject-0.0.1-SNAPSHOT.jar' 부분은 실제 생성되는 jar 파일 이름으로 확인해주세요!
+# build/libs 폴더에 있는 모든 .jar 파일을 app.jar로 복사
 COPY --from=build /home/gradle/src/build/libs/*.jar app.jar
 
-# 컨테이너가 뜰 때 실행할 명령어
 ENTRYPOINT ["java", "-jar", "app.jar"]
