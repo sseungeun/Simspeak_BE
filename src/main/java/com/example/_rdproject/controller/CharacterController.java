@@ -1,10 +1,12 @@
 package com.example._rdproject.controller;
 
 import com.example._rdproject.dto.CharacterDto;
+import com.example._rdproject.dto.ReportDto;
 import com.example._rdproject.dto.StageProgressDto;
 import com.example._rdproject.dto.UserDto;
 import com.example._rdproject.dto.common.CommonResponse;
 import com.example._rdproject.service.CharacterService;
+import com.example._rdproject.service.ChatReportService;
 import com.example._rdproject.service.StageService;
 import com.example._rdproject.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,6 +26,7 @@ public class CharacterController {
     private final CharacterService characterService;
     private final UserService userService;
     private final StageService stageService;
+    private final ChatReportService chatReportService;
 
     @Operation(
             summary = "메인 화면 캐릭터 목록 및 유저 상태 조회",
@@ -84,6 +87,17 @@ public class CharacterController {
     ) {
         StageProgressDto.UpdateResponse response = stageService.updateStageProgress(request);
         return ResponseEntity.ok(CommonResponse.success("스테이지 진행도 업데이트가 완료되었습니다.", response));
+    }
+
+    // 캐릭터별 세션(학습 기록) 목록 조회
+    @Operation(summary = "캐릭터별 학습 세션 목록 조회", description = "특정 캐릭터와 유저의 전체 학습 기록을 날짜별(Day) 리스트로 조회합니다.")
+    @GetMapping("/{characterId}/sessions")
+    public ResponseEntity<CommonResponse<List<ReportDto.SessionSummaryResponse>>> getCharacterSessions(
+            @PathVariable String characterId,
+            @RequestParam Long userId) {
+
+        List<ReportDto.SessionSummaryResponse> list = chatReportService.getCharacterSessions(characterId, userId);
+        return ResponseEntity.ok(CommonResponse.success("세션 목록을 성공적으로 조회했습니다.", list));
     }
 
     @Operation(

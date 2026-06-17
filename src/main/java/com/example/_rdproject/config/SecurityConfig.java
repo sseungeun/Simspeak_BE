@@ -19,28 +19,54 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // 💡 1. CORS 설정 활성화
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // 2. 채팅 API 관련 엔드포인트 허용 확인
-                        .requestMatchers("/api/chat/**").permitAll()
-                        .requestMatchers("/api/v1/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/api/v1/users/**", "/api/v1/characters/**", "/api/v1/level-test/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers(
+                                // ==========================================
+                                // 1. 기존 V1 도메인 API (인증, 유저, 캐릭터, 레벨테스트)
+                                // ==========================================
+                                "/api/v1/auth/**",
+                                "/api/v1/users/**",
+                                "/api/v1/characters/**",
+                                "/api/v1/level-test/**",
+
+                                // ==========================================
+                                // 2. 채팅 및 세션 진행 관련 API
+                                // ==========================================
+                                "/api/chat/**",      // 메시지 전송, 채팅 내역 조회 등
+                                "/api/sessions/**",  // 세션 종료 (/api/sessions/{sessionId}/end) 등
+
+                                // ==========================================
+                                // 3. 리포트, 오답노트, 분석 API (새로 분리된 도메인들)
+                                // ==========================================
+                                "/api/reports/**",       // 세션 리포트 조회
+                                "/api/corrections/**",   // 오답노트 목록, 수정, 북마크
+                                "/api/analysis/**",      // 발음 분석 등
+
+                                // ==========================================
+                                // 4. 개발/문서화 도구 및 에러 허용
+                                // ==========================================
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/error"
+                        ).permitAll()
+                        .anyRequest().authenticated() // 위 목록에 없는 건 모두 인증(로그인) 필요!
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
     }
 
-    // 3. CORS 상세 설정 빈 등록
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // 프론트엔드 도메인 허용 (테스트를 위해 모든 오리진 허용)
         configuration.setAllowedOriginPatterns(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true); // 쿠키나 인증 헤더를 허용할 경우 true
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
