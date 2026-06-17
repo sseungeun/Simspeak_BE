@@ -52,7 +52,7 @@ public class ChatMessageDto {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Response {
-        @JsonProperty("text")
+        @JsonProperty("text_content")
         private String text;
 
         @JsonProperty("action_description")
