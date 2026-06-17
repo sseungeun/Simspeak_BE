@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @Builder
 public class AiRequestDto {
@@ -26,4 +28,7 @@ public class AiRequestDto {
 
     @JsonProperty("action_description")
     private String actionDescription;
+
+    @JsonProperty("history")
+    private List<HistoryItemDto> history;
 }

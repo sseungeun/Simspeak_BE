@@ -30,11 +30,11 @@ public class ChatController {
      */
     @Operation(summary = "유저 메시지 전송 및 AI 응답 처리", description = "대화의 전체적인 응답 처리를 도와줍니다.")
     @PostMapping("/message")
-    public ResponseEntity<CommonResponse<ChatMessageDto.Response>> sendMessage(
+    public ResponseEntity<CommonResponse<ChatMessageDto.FrontendResponse>> sendMessage(
             @RequestBody ChatMessageDto.Request request) {
 
         // 서비스 호출하여 비즈니스 로직(AI 통신 + 로그 저장) 수행
-        ChatMessageDto.Response response = chatService.processMessage(request);
+        ChatMessageDto.FrontendResponse response = chatService.processMessage(request);
 
         // 성공 응답 반환
         return ResponseEntity.ok(CommonResponse.success("메시지 처리가 완료되었습니다.", response));
