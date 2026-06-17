@@ -5,7 +5,7 @@ WORKDIR /home/gradle/src
 RUN gradle build --no-daemon -x test
 
 # 2. 실행 단계 (경량화된 자바 이미지)
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
 
 # 빌드 단계에서 생성된 jar 파일 복사
