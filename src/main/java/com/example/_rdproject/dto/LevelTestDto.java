@@ -106,6 +106,12 @@ public class LevelTestDto {
 
         @JsonProperty("final_result")
         private FinalResult finalResult;
+
+        @JsonProperty("next_question_text")
+        private String nextQuestionText;
+
+        @JsonProperty("next_question_audio_url")
+        private String nextQuestionAudioUrl;
     }
 
     @Getter
