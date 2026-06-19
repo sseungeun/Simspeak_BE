@@ -92,6 +92,8 @@ public class LevelTestDto {
     }
 
     @Getter
+    @Builder
+    @Setter
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AiLevelTestResponse {

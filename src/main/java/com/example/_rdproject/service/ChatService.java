@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Instant;
@@ -37,12 +38,13 @@ public class ChatService {
     private final RawAiResponseRepository rawAiResponseRepository;
     private final WebClient aiServerWebClient;
     private final ObjectMapper objectMapper;
+    private final LocalFileService fileService;
 
     @Value("${ai-server.api-key}")
     private String aiApiKey;
 
     @Transactional
-    public ChatMessageDto.FrontendResponse processMessage(ChatMessageDto.Request request) {
+    public ChatMessageDto.FrontendResponse processMessage(ChatMessageDto.Request request,MultipartFile audioFile) {
         ChatSession session = sessionRepository.findById(request.getSessionId())
                 .orElseThrow(() -> new IllegalArgumentException("세션을 찾을 수 없습니다."));
 
@@ -69,13 +71,17 @@ public class ChatService {
                     .build();
             status = userCharacterStatusRepository.save(newStatus);
         }
-
-        if (request.getText() == null) {
-            throw new IllegalArgumentException("사용자 메시지(text)가 비어있거나 올바르게 전달되지 않았습니다.");
+        String finalUserAudioUrl = request.getUserAudioUrl();
+        if (audioFile != null && !audioFile.isEmpty()) {
+            log.info("[VOICE UPLOAD] 프론트엔드 녹음 파일 감지됨. 업로드 프로세스 시작.");
+            finalUserAudioUrl = fileService.upload(audioFile); // 업로드 후 상대 경로 확보 (/uploads/xxx.mp3)
         }
 
         List<ChatLog> historyLogs = chatLogRepository.findBySessionIdOrderByTurnCountAsc(request.getSessionId());
-
+        List<HistoryItemDto> historyList = mapToHistory(historyLogs);
+        if (historyList == null) {
+            historyList = new ArrayList<>();
+        }
 //        ChatMessageDto.Request aiRequest = ChatMessageDto.Request.builder()
 //                .sessionId(request.getSessionId())
 //                .textContent(request.getTextContent())
@@ -88,10 +94,6 @@ public class ChatService {
 //                .currentAffinity(status.getCurrentAffinity())
 //                .history(mapToHistory(historyLogs))
 //                .build();
-        List<HistoryItemDto> historyList = mapToHistory(historyLogs);
-        if (historyList == null || historyList.isEmpty()) {
-            historyList = new ArrayList<>(); // 빈 리스트라도 확실히 넘겨야 합니다.
-        }
         ChatMessageDto.AiRequest aiRequest = ChatMessageDto.AiRequest.builder()
                 .userId(session.getUserId().intValue())
                 .characterId(session.getCharacterId())
@@ -219,6 +221,7 @@ public class ChatService {
                 .user(user)
                 .character(character)
                 .userText(userRequest.getText())
+                .userAudioUrl(userRequest.getUserAudioUrl())
                 .sessionId(session.getSessionId())
                 .createdAt(LocalDateTime.now())
                 .aiTextContent(aiResponse.getText())
@@ -251,8 +254,6 @@ public class ChatService {
                     .build());
         }
     }
-
-    // 1줄의 DB 데이터를 -> AI에게 보내기 위해 2줄(user, assistant)로 분리해주는 마법!
     private List<HistoryItemDto> mapToHistory(List<ChatLog> logs) {
         List<HistoryItemDto> historyList = new ArrayList<>();
 

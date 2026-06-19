@@ -8,8 +8,11 @@ import com.example._rdproject.service.ChatService;
 import com.example._rdproject.service.ChatSessionService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class ChatController {
     private final ChatSessionService chatSessionService;
     private final ChatService chatService;
+    private final ObjectMapper objectMapper;
 
     @Operation(summary = "초기 대화 수신", description = "대화 세션 시작(방 생성) 및 초기 대사 수신을 보여줍니다.")
     @PostMapping("/sessions")
@@ -28,16 +32,23 @@ public class ChatController {
     /**
      * 유저 메시지 전송 및 AI 응답 처리 API
      */
-    @Operation(summary = "유저 메시지 전송 및 AI 응답 처리", description = "대화의 전체적인 응답 처리를 도와줍니다.")
-    @PostMapping("/message")
+    @Operation(summary = "유저 메시지 전송 및 AI 응답 처리", description = "대화의 전체적인 응답 처리를 도와줍니다. 음성 파일 업로드를 지원합니다.")
+    @PostMapping(value = "/message", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<ChatMessageDto.FrontendResponse>> sendMessage(
-            @RequestBody ChatMessageDto.Request request) {
+            @RequestPart(value = "audioFile", required = false) MultipartFile audioFile,
+            @RequestParam("request") String requestStr) { // ◀ 2. @RequestPart 대신 @RequestParam String으로 변경
 
-        // 서비스 호출하여 비즈니스 로직(AI 통신 + 로그 저장) 수행
-        ChatMessageDto.FrontendResponse response = chatService.processMessage(request);
+        try {
+            // 3. String으로 유입된 JSON 텍스트 데이터를 백엔드에서 주도적으로 Java 객체로 정밀 변환
+            ChatMessageDto.Request request = objectMapper.readValue(requestStr, ChatMessageDto.Request.class);
 
-        // 성공 응답 반환
-        return ResponseEntity.ok(CommonResponse.success("메시지 처리가 완료되었습니다.", response));
+            // 파일 업로드 객체 스트림을 서비스 단으로 함께 위임 처리
+            ChatMessageDto.FrontendResponse response = chatService.processMessage(request, audioFile);
+            return ResponseEntity.ok(CommonResponse.success("메시지 처리가 완료되었습니다.", response));
+
+        } catch (Exception e) {
+            throw new IllegalArgumentException("요청된 JSON 포맷 형식이 올바르지 않습니다. 데이터를 확인해 주세요.", e);
+        }
     }
     /**
      * 유저 메시지 히스토리 조회
