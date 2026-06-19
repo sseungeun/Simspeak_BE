@@ -44,7 +44,7 @@ public class ChatService {
     private String aiApiKey;
 
     @Transactional
-    public ChatMessageDto.FrontendResponse processMessage(ChatMessageDto.Request request,MultipartFile audioFile) {
+    public ChatMessageDto.FrontendResponse processMessage(ChatMessageDto.Request request, MultipartFile audioFile) {
         ChatSession session = sessionRepository.findById(request.getSessionId())
                 .orElseThrow(() -> new IllegalArgumentException("세션을 찾을 수 없습니다."));
 
@@ -71,6 +71,7 @@ public class ChatService {
                     .build();
             status = userCharacterStatusRepository.save(newStatus);
         }
+
         String finalUserAudioUrl = request.getUserAudioUrl();
         if (audioFile != null && !audioFile.isEmpty()) {
             log.info("[VOICE UPLOAD] 프론트엔드 녹음 파일 감지됨. 업로드 프로세스 시작.");
@@ -82,24 +83,13 @@ public class ChatService {
         if (historyList == null) {
             historyList = new ArrayList<>();
         }
-//        ChatMessageDto.Request aiRequest = ChatMessageDto.Request.builder()
-//                .sessionId(request.getSessionId())
-//                .textContent(request.getTextContent())
-//                .inputType(request.getInputType())
-//                .characterId(session.getCharacterId())
-//                .scenarioId(session.getScenarioId())
-//                .stageLevel(session.getStageId().intValue())
-//                .userLevel(status.getUserLevel())
-//                .turnCount(status.getTurnCount())
-//                .currentAffinity(status.getCurrentAffinity())
-//                .history(mapToHistory(historyLogs))
-//                .build();
+
         ChatMessageDto.AiRequest aiRequest = ChatMessageDto.AiRequest.builder()
                 .userId(session.getUserId().intValue())
                 .characterId(session.getCharacterId())
                 .text(request.getText())
                 .isVideoCall(true)
-                .userAudioUrl(request.getUserAudioUrl())
+                .userAudioUrl(finalUserAudioUrl) // ◀ 실제 업로드된 진짜 오디오 경로 매핑 완료
                 .stageId(session.getStageId().intValue())
                 .history(historyList)
                 .build();
@@ -130,10 +120,28 @@ public class ChatService {
         ChatMessageDto.FrontendResponse frontendResponse = null;
 
         if (aiResponse != null) {
-            // 1. 대화 로그 저장
-            saveAiResponseToLog(session, request, aiResponse, historyLogs);
+            // ───────────────── [교정 완료] updatedRequest 변수 선언 및 객체 조립 ─────────────────
+            ChatMessageDto.Request updatedRequest = ChatMessageDto.Request.builder()
+                    .sessionId(request.getSessionId())
+                    .text(request.getText())
+                    .inputType(request.getInputType())
+                    .characterId(request.getCharacterId())
+                    .scenarioId(request.getScenarioId())
+                    .targetLanguage(request.getTargetLanguage())
+                    .stageLevel(request.getStageLevel())
+                    .userLevel(request.getUserLevel())
+                    .turnCount(request.getTurnCount())
+                    .currentAffinity(request.getCurrentAffinity())
+                    .userAudioUrl(finalUserAudioUrl) // ◀ 진짜 새로 저장된 업로드 경로 바인딩
+                    .history(request.getHistory())
+                    .build();
+
+            // 1. 대화 로그 저장 (이제 변수가 존재하므로 컴파일 에러가 나지 않습니다)
+            saveAiResponseToLog(session, updatedRequest, aiResponse, historyLogs);
+
             // 2. 턴 수 1 증가
             status.setTurnCount(status.getTurnCount() + 1);
+
             // 3. AI 1차 응답에 포함된 호감도 즉시 갱신
             if (aiResponse.getCurrentTotalAffinity() != null) {
                 status.setCurrentAffinity(aiResponse.getCurrentTotalAffinity());
@@ -174,7 +182,6 @@ public class ChatService {
                     pronunciation = EvaluationDto.PronunciationInfo.builder()
                             .accuracy(aiEval.getPronunciationEvaluations().getAccuracy())
                             .fluency(aiEval.getPronunciationEvaluations().getFluency())
-                            // wordDetails 가져오는 메서드명은 실제 AiResponseDto에 맞게 수정하세요
                             .wordDetailsJson(aiEval.getPronunciationEvaluations().getWordDetails())
                             .build();
                 }
@@ -198,7 +205,6 @@ public class ChatService {
                     .build();
         }
 
-        // 기존 return aiResponse; 대신 새 객체 반환
         return frontendResponse;
     }
 
@@ -254,6 +260,7 @@ public class ChatService {
                     .build());
         }
     }
+
     private List<HistoryItemDto> mapToHistory(List<ChatLog> logs) {
         List<HistoryItemDto> historyList = new ArrayList<>();
 
