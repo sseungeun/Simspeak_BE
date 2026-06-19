@@ -136,6 +136,7 @@ public class CharacterService {
         );
     }
 
+    // CharacterService.java 내부의 getCharacterStages 메서드를 아래 코드로 통째로 갈아 끼워주세요.
     public CharacterDto.StageListResponse getCharacterStages(Long userId, String characterId) {
         Character character = characterRepository.findById(characterId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 캐릭터입니다."));
@@ -153,10 +154,16 @@ public class CharacterService {
 
                     if (stage.getStageNumber() == 1) isUnlocked = true;
 
+                    // ───────── [6번 버그 해결 핵심 레이어] Null 가드 장착 ─────────
+                    String stageTypeName = "regular"; // 안정적인 기본값 폴백 셋업
+                    if (stage.getStageType() != null) {
+                        stageTypeName = stage.getStageType().name();
+                    }
+
                     return CharacterDto.StageResponse.builder()
                             .stageId(stage.getId())
                             .stageNumber(stage.getStageNumber())
-                            .stageType(stage.getStageType().name())
+                            .stageType(stageTypeName) // ◀ 가드 가공 완료된 폴백 문자열 주입
                             .title(stage.getTitle())
                             .scenarioId(stage.getScenarioId())
                             .unlockAffinityRatio(stage.getUnlockAffinityRatio())

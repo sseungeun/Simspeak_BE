@@ -27,6 +27,7 @@ public class ChatReportService {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     private final LocalFileService fileService;
+    private final ChatSessionRepository chatSessionRepository;
 
     public ReportDto.SessionReportResponse getSessionReport(String sessionId, Long userId) {
         List<Correction> corrections = correctionRepository.findByChatLog_SessionId(sessionId);
@@ -149,32 +150,35 @@ public class ChatReportService {
 
     // 4. 캐릭터별 세션(학습 기록) 목록 조회
     public List<ReportDto.SessionSummaryResponse> getCharacterSessions(String characterId, Long userId) {
-        List<ChatLog> logs = chatLogRepository.findByCharacterIdAndUserId(characterId, userId);
+        // chat_logs 기반이 아니라 chat_sessions 기반 정방향 쿼리 조회로 변경
+        List<ChatSession> sessions = chatSessionRepository.findByCharacterIdAndUserId(characterId, userId);
 
-        // 세션별로 그룹화하여 데이터 가공
-        Map<String, List<ChatLog>> groupedLogs = logs.stream()
-                .collect(Collectors.groupingBy(ChatLog::getSessionId));
-
-        int totalSessions = groupedLogs.size();
-
-        return groupedLogs.entrySet().stream()
-                .map(entry -> ReportDto.SessionSummaryResponse.builder()
-                        .session_id(entry.getKey())
-                        .day_number(1) // 필요 시 세션 생성 순서에 따라 번호 부여
-                        .latest_day(totalSessions)
-                        .build())
+        return java.util.stream.IntStream.range(0, sessions.size())
+                .mapToObj(index -> {
+                    ChatSession s = sessions.get(index);
+                    return ReportDto.SessionSummaryResponse.builder()
+                            .sessionId(s.getSessionId())
+                            .dayNumber(index + 1)
+                            .latestDay(sessions.size())
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
     // 5. 세션 종료 처리 (엔딩)
     @Transactional
     public ReportDto.SessionEndResponse endSession(String sessionId) {
-        // 실제 운영 시에는 여기서 호감도 계산 및 세션 상태 변경 로직이 들어갑니다.
-        // 현재는 종료되었다는 것을 확정하는 로직 수행
+        ChatSession session = chatSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 학습 세션방 식별자입니다: " + sessionId));
+
+        // 종료 상태 true로 강제 전환 더티체킹 영속화 이행
+        session.setIsCompleted(true);
+        chatSessionRepository.save(session);
+
         return ReportDto.SessionEndResponse.builder()
-                .session_id(sessionId)
-                .final_affinity(85) // 예시값
-                .achieved_level("B2") // 예시값
+                .sessionId(sessionId)
+                .finalAffinity(85)
+                .achievedLevel("B2")
                 .build();
     }
 }

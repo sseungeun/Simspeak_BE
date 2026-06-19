@@ -3,6 +3,7 @@ package com.example._rdproject.repository;
 import com.example._rdproject.entity.ChatSession;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ChatSessionRepository extends JpaRepository<ChatSession, String> {
@@ -10,4 +11,6 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, String
     Optional<ChatSession> findFirstByUserIdAndStageIdOrderByCreatedAtDesc(Long userId, Long stageId);
 
     Long countByUserId(Long userId);
+    // 특정 캐릭터와 특정 유저가 개설했던 모든 대화 세션방 목록 조회
+    List<ChatSession> findByCharacterIdAndUserId(String characterId, Long userId);
 }

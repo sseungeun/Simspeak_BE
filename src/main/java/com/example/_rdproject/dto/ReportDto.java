@@ -37,9 +37,14 @@ public class ReportDto {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class SessionSummaryResponse {
-        private String session_id;
-        private Integer day_number;
-        private Integer latest_day;
+        @JsonProperty("session_id")
+        private String sessionId;
+
+        @JsonProperty("day_number")
+        private Integer dayNumber;
+
+        @JsonProperty("latest_day")
+        private Integer latestDay;
     }
 
     // 세션 종료 처리용 DTO
@@ -47,8 +52,13 @@ public class ReportDto {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class SessionEndResponse {
-        private String session_id;
-        private Integer final_affinity;
-        private String achieved_level;
+        @JsonProperty("session_id")
+        private String sessionId;
+
+        @JsonProperty("final_affinity")
+        private Integer finalAffinity;
+
+        @JsonProperty("achieved_level")
+        private String achievedLevel;
     }
 }
