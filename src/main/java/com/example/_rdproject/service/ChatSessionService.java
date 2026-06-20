@@ -2,7 +2,9 @@ package com.example._rdproject.service;
 
 import com.example._rdproject.dto.ChatSessionDto;
 import com.example._rdproject.entity.ChatSession;
+import com.example._rdproject.entity.Stage;
 import com.example._rdproject.repository.ChatSessionRepository;
+import com.example._rdproject.repository.StageRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,9 +18,13 @@ import java.util.UUID;
 @org.springframework.transaction.annotation.Transactional(readOnly = true)
 public class ChatSessionService {
     private final ChatSessionRepository sessionRepository;
+    private final StageRepository stageRepository;
 
     @Transactional
     public ChatSessionDto.CreateResponse createSession(ChatSessionDto.CreateRequest request) {
+        Stage stage = stageRepository.findById(request.getStageId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 스테이지 식별자입니다: " + request.getStageId()));
+
         String sessionId = "sess_" + request.getCharacterId() + "_" + UUID.randomUUID().toString().substring(0, 8);
 
         ChatSession session = ChatSession.builder()
@@ -32,11 +38,10 @@ public class ChatSessionService {
 
         sessionRepository.save(session);
 
-        // 하드코딩
         var firstMessage = ChatSessionDto.FirstMessage.builder()
-                .textContent("Hey there! Welcome to the beach. Are you ready to surf?")
-                .actionDescription("서핑보드를 툭툭 치며 환하게 웃는다.")
-                .audioUrl("https://azure-storage.net/audio/leo_first_say.mp3")
+                .textContent(stage.getFirstText())
+                .actionDescription(stage.getFirstAction())
+                .audioUrl(stage.getFirstAudioUrl())
                 .build();
 
         return ChatSessionDto.CreateResponse.builder()
