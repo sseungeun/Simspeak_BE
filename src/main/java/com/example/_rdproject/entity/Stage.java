@@ -41,4 +41,13 @@ public class Stage {
 
     @Column(name = "scenario_id")
     private String scenarioId;
+
+    @Column(name = "first_text", length = 500)
+    private String firstText;
+
+    @Column(name = "first_action", length = 500)
+    private String firstAction;
+
+    @Column(name = "first_audio_url", length = 1000)
+    private String firstAudioUrl;
 }
