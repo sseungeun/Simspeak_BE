@@ -22,3 +22,9 @@ spring:
 
   ai-server:
     api-key: ${ai-server.api-key}
+
+  azure:
+    storage:
+      connection-string: ${AZURE_STORAGE_CONNECTION_STRING}
+      container-name: audio-files
+      cdn-base-url: ${CDN_BASE_URL}

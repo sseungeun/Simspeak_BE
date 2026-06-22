@@ -36,7 +36,7 @@ public class ChatService {
     private final CorrectionRepository correctionRepository;
     private final WebClient aiServerWebClient;
     private final ObjectMapper objectMapper;
-    private final LocalFileService fileService;
+    private final S3Service fileService;
 
     @Value("${ai-server.api-key}")
     private String aiApiKey;
