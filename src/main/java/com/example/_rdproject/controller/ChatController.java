@@ -76,4 +76,14 @@ public class ChatController {
         String msg = response.getSessionId() != null ? "진행 중인 세션을 찾았습니다." : "진행 중인 세션이 없습니다.";
         return ResponseEntity.ok(CommonResponse.success(msg, response));
     }
+    @Operation(summary = "AI 비동기 평가 결과 콜백 수신", description = "파이썬 AI 서버가 백그라운드 연산을 마치고 문법 평가 및 교정 데이터를 전송하는 통로입니다.")
+    @PostMapping("/callback")
+    public ResponseEntity<CommonResponse<Void>> receiveAiCallback(
+            @RequestBody ChatMessageDto.AiCallbackRequest callbackRequest) {
+
+        // 파이썬이 비동기로 보내온 평가 데이터와 corrections를 DB에 매핑 및 저장
+        chatService.saveAsynchronousEvaluation(callbackRequest);
+
+        return ResponseEntity.ok(CommonResponse.success("AI 비동기 평가 데이터가 성공적으로 처리 및 저장되었습니다.", null));
+    }
 }
