@@ -38,7 +38,7 @@ public class ChatService {
     private final ObjectMapper objectMapper;
     private final S3Service fileService;
 
-    @Value("${ai-server.api-key}")
+    @Value("${AI_SERVER_API_KEY}")
     private String aiApiKey;
 
     @Transactional
