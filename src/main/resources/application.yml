@@ -20,11 +20,11 @@ spring:
   file:
     upload-dir: /temp/uploads/
 
-  ai-server:
-    api-key: ${ai-server.api-key}
+ai-server:
+  api-key: ${AI_SERVER_API_KEY}
 
-  azure:
-    storage:
-      connection-string: ${AZURE_STORAGE_CONNECTION_STRING}
-      container-name: audio-files
-      cdn-base-url: ${CDN_BASE_URL}
+azure:
+  storage:
+    connection-string: ${AZURE_STORAGE_CONNECTION_STRING}
+    container-name: audio-files
+    cdn-base-url: ${CDN_BASE_URL}
