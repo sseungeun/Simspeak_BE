@@ -73,7 +73,7 @@ public class ChatService {
         String finalUserAudioUrl = request.getUserAudioUrl();
         if (audioFile != null && !audioFile.isEmpty()) {
             log.info("[VOICE UPLOAD] 프론트엔드 녹음 파일 감지됨. 업로드 프로세스 시작.");
-            finalUserAudioUrl = fileService.upload(audioFile); // 업로드 후 상대 경로 확보 (/uploads/xxx.mp3)
+            finalUserAudioUrl = fileService.upload(audioFile);
         }
 
         List<ChatLog> historyLogs = chatLogRepository.findBySessionIdOrderByTurnCountAsc(request.getSessionId());
@@ -82,30 +82,29 @@ public class ChatService {
             historyList = new ArrayList<>();
         }
 
-        // 1. [B안 핵심] 대화 로그 엔티티 '먼저 생성'하여 데이터베이스 고유 ID(PK) 선발급
-        // ChatLog 엔티티 구조체에 정의되어 있는 스펙 규칙을 정밀 매핑합니다.
+        // 1. 대화 로그 엔티티 '먼저 생성'하여 데이터베이스 고유 ID(PK) 선발급
         ChatLog initialUserLog = ChatLog.builder()
                 .user(user)
                 .character(character)
                 .turnCount(status.getTurnCount())
                 .sessionId(session.getSessionId())
-                .userText(request.getText()) // 우선 프론트엔드가 보낸 초기 텍스트 세팅
+                .userText(request.getText())
                 .userAudioUrl(finalUserAudioUrl)
                 .stageId(session.getStageId() != null ? session.getStageId().toString() : null)
                 .build();
 
         ChatLog savedUserLog = chatLogRepository.save(initialUserLog);
 
-        // 2. 파이썬으로 보낼 요청 바디 생성 (이때 선발급된 chatLogId를 반드시 탑재해야 파이썬이 콜백 주소로 돌려줍니다)
+        // 2. 파이썬으로 보낼 요청 바디 생성
         ChatMessageDto.AiRequest aiRequest = ChatMessageDto.AiRequest.builder()
                 .userId(session.getUserId().intValue())
                 .characterId(session.getCharacterId())
                 .text(request.getText())
                 .isVideoCall(true)
                 .userAudioUrl(finalUserAudioUrl)
-                .stageId(session.getStageId().intValue())
+                .stageId(session.getStageId() != null ? session.getStageId().intValue() : 0)
                 .history(historyList)
-                .chatLogId(savedUserLog.getId()) // ◀ [기차표 역할] 파이썬 백그라운드용 타깃 지정 식별자 주입
+                .chatLogId(savedUserLog.getId())
                 .build();
 
         try {
@@ -115,7 +114,7 @@ public class ChatService {
             log.error("JSON 변환 실패: {}", e.getMessage());
         }
 
-        // AI 서버 통신 (파이썬 서버는 비동기 연산 중이므로 system_evaluation이 없는 상태로 즉시 답변 텍스트만 전달)
+        // AI 서버 통신
         ChatMessageDto.Response aiResponse = aiServerWebClient.post()
                 .uri("/api/v1/chat/message")
                 .bodyValue(aiRequest)
@@ -134,7 +133,7 @@ public class ChatService {
         ChatMessageDto.FrontendResponse frontendResponse = null;
 
         if (aiResponse != null) {
-            // [이슈 #2 해결] 파이썬이 음성을 텍스트로 변환해준 진짜 STT 결과 데이터(userRecognizedText)가 존재하면 가져옴
+            // 파이썬이 음성을 텍스트로 변환해준 진짜 STT 결과 데이터(userRecognizedText)가 존재하면 가져옴
             String finalUserText = (aiResponse.getUserRecognizedText() != null && !aiResponse.getUserRecognizedText().isEmpty())
                     ? aiResponse.getUserRecognizedText()
                     : request.getText();
@@ -176,16 +175,15 @@ public class ChatService {
             }
             userCharacterStatusRepository.save(status);
 
-            // 7. [B안 설계 핵심] 실시간 응답 타이밍에는 system_evaluation을 기다리지 않고 항상 null로 응답 처리
-            // (어차피 AI 서버에서도 비동기 계산을 타느라 지금은 들어오지 않으므로 프론트엔드가 즉시 렌더링하도록 null 포장 전달)
+            // 7. 실시간 응답 타이밍에는 system_evaluation을 기다리지 않고 항상 null로 응답 처리
             frontendResponse = ChatMessageDto.FrontendResponse.builder()
                     .text(aiResponse.getText())
                     .actionDescription(aiResponse.getActionDescription())
                     .affinityDelta(aiResponse.getAffinityDelta())
                     .currentTotalAffinity(aiResponse.getCurrentTotalAffinity())
                     .audioUrl(aiResponse.getAudioUrl())
-                    .systemEvaluation(null) // ◀ 추후 Callback을 통해 비동기 적재되므로 초기 null 응답 확정
-                    .userRecognizedText(aiResponse.getUserRecognizedText()) // ◀ [이슈 #3 해결] 누락되었던 진짜 STT 필드 탑재
+                    .systemEvaluation(null)
+                    .userRecognizedText(aiResponse.getUserRecognizedText())
                     .build();
         }
 
@@ -203,7 +201,7 @@ public class ChatService {
             return;
         }
 
-        // 1. 파이썬이 돌려보낸 chatLogId 기차표를 사용해 기존 대화 로그 엔티티 역추적 조회
+        // 1. 파이썬이 돌려보낸 chatLogId를 사용해 기존 대화 로그 엔티티 역추적 조회
         ChatLog targetLog = chatLogRepository.findById(callbackRequest.getChatLogId())
                 .orElseThrow(() -> new IllegalArgumentException("콜백 대상에 해당하는 대화 로그를 찾을 수 없습니다. ID: " + callbackRequest.getChatLogId()));
 
@@ -213,24 +211,24 @@ public class ChatService {
             return;
         }
 
-        // 2. ChatLog 엔티티에 비동기로 도출된 문법 총평 피드백 사후 업데이트 저장 (Setter 기반 필드 주입)
+        // 2. ChatLog 엔티티에 비동기로 도출된 문법 총평 피드백 사후 업데이트 저장
         if (aiEval.getGrammarFeedback() != null) {
             targetLog.setGrammarFeedback(aiEval.getGrammarFeedback());
             chatLogRepository.save(targetLog);
         }
 
-        // 3. [이슈 #1 완전히 해결 완료] 비어있던 corrections 테이블에 문장별 교정 원본 JSON 데이터 루프 돌며 정상 INSERT 진행
+        // 3. 비어있던 corrections 테이블에 문장별 교정 원본 JSON 데이터 루프 돌며 정상 INSERT 진행
         if (aiEval.getCorrectionsJson() != null) {
             log.info("[CALLBACK PROCESSING] 비동기 문법/표현 오답 데이터 수집 감지됨. corrections 테이블 적재 수량: {}", aiEval.getCorrectionsJson().size());
 
             for (var item : aiEval.getCorrectionsJson()) {
                 Correction correction = Correction.builder()
                         .chatLog(targetLog)
-                        .correctionType(com.example._rdproject.domain.CorrectionType.GRAMMAR) // 프로젝트 내부 도메인 Enum 매핑 규칙 준수
+                        .correctionType(com.example._rdproject.domain.CorrectionType.GRAMMAR)
                         .originalSentence(item.getOriginalSentence())
                         .correctedSentence(item.getCorrectedSentence())
                         .correctedAudioUrl(item.getCorrectedAudioUrl())
-                        .isReviewed(false) // 복습 오답노트 초기 미복습 처리 (false 상태 유지)
+                        .isReviewed(false)
                         .build();
 
                 correctionRepository.save(correction);
